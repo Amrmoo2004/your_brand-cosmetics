@@ -4,6 +4,12 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import authRouter from "./modules/auth/auth.controller.js";
+import swaggerUi from "swagger-ui-express";
+import fs from "fs";
+
+const swaggerDocument = JSON.parse(
+    fs.readFileSync(new URL("../../swagger.json", import.meta.url), "utf8")
+);
 
 export const bootstrap = async (): Promise<express.Application> => {
     const app: express.Application = express();
@@ -20,6 +26,7 @@ export const bootstrap = async (): Promise<express.Application> => {
     await import("./modules/DB/db.connect.js").then(({ default: connectDB }) => connectDB());
 
     // Routes
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use("/auth", authRouter);
 
     app.get("/", (req: Request, res: Response) => {
