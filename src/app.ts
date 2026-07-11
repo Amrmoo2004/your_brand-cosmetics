@@ -15,7 +15,9 @@ export const bootstrap = async (): Promise<express.Application> => {
     const app: express.Application = express();
     
     app.use(cors());
-    app.use(helmet());
+    app.use(helmet({
+        contentSecurityPolicy: false,
+    }));
     app.use(rateLimit({
         windowMs: 15 * 60 * 1000, // 15 دقيقة
         max: 100 // السماح بـ 100 طلب فقط لكل IP
