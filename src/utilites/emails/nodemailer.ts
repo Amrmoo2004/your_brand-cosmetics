@@ -44,7 +44,7 @@ export async function sendemails({
 
     try {
         const info = await transporter.sendMail({
-            from: `"ZMSCO" <${from}>`,
+            from: `"YOUR BRAND COSMETICS" <${from}>`,
             to, cc, bcc, text, html, subject, attachments
         });
 

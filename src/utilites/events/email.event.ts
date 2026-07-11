@@ -8,7 +8,7 @@ export const emailEmitter = new EventEmitter();
 emailEmitter.on("sendVerificationEmail", async (email: string, otp: string) => {
     try {
         const emailHtml = htmlTemplate({
-            title: "Welcome to ZMSCO Cosmetics!",
+            title: "Welcome to YOUR BRAND COSMETICS!",
             message: "Thank you for signing up. Please use the following OTP to verify your email address. This code is valid for 10 minutes.",
             code: otp
         });
