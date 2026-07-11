@@ -8,7 +8,7 @@ import swaggerUi from "swagger-ui-express";
 import fs from "fs";
 
 const swaggerDocument = JSON.parse(
-    fs.readFileSync(new URL("../../swagger.json", import.meta.url), "utf8")
+    fs.readFileSync(new URL("../swagger.json", import.meta.url), "utf8")
 );
 
 export const bootstrap = async (): Promise<express.Application> => {
