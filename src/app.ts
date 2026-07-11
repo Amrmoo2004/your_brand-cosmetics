@@ -17,6 +17,8 @@ export const bootstrap = async (): Promise<express.Application> => {
     app.use(cors());
     app.use(helmet({
         contentSecurityPolicy: false,
+        crossOriginResourcePolicy: false,
+        crossOriginEmbedderPolicy: false,
     }));
     app.use(rateLimit({
         windowMs: 15 * 60 * 1000, // 15 دقيقة
