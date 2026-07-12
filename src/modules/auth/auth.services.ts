@@ -37,18 +37,18 @@ class AuthService {
       password: hashedPassword,
       otp,
       otpExpiresAt,
-      isVerified: false,
+      isVerified: true, // bypassed
     };
     if (data.phone) {
       userPayload.phone = data.phone;
     }
-    const newUser = await userModel.create(userPayload);
+    await userModel.create(userPayload);
 
     // Emit event to send email in the background
-    emailEmitter.emit("sendVerificationEmail", newUser.email, otp);
+    // emailEmitter.emit("sendVerificationEmail", data.email, otp);
 
     res.status(201).json({
-      message: "User created successfully. Please check your email for the verification code.",
+      message: "User created successfully.",
     });
   };
 
@@ -90,9 +90,9 @@ class AuthService {
       throw new BadRequestException("Invalid email or password");
     }
 
-    if (!user.isVerified) {
-      throw new BadRequestException("Please verify your email first before logging in.");
-    }
+    // if (!user.isVerified) {
+    //   throw new BadRequestException("Please verify your email first before logging in.");
+    // }
 
     const isMatch = await comparehash(data.password, user.password!);
     if (!isMatch) {

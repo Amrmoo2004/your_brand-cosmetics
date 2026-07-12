@@ -25,12 +25,11 @@ app.use(helmet({
   contentSecurityPolicy: false,
   hsts: false,
 }));  
-    // ── Performance Middleware ───────────────────────────────────────────────────
-    // Gzip compression: reduces response size by ~70%
+  
     app.use(compression());
 
     // ── Rate Limiters ─────────────────────────────────────────────────────────────
-    // Global: 500 requests per 15 minutes per IP (was 100 — caused 429s due to polling)
+    // Global: 2000 requests per 15 minutes per IP (was 100 — caused 429s due to polling)
     const globalLimiter = rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 2000,

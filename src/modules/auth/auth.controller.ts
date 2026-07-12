@@ -7,7 +7,7 @@ import { protect } from "../../middlewares/auth.middleware.js";
 const router = Router();
 
 router.post("/signup", validation({ body: validations.signupSchema }), authservice.signup);
-router.post("/verify-email", validation({ body: validations.verifyEmailSchema }), authservice.verifyEmail);
+// router.post("/verify-email", validation({ body: validations.verifyEmailSchema }), authservice.verifyEmail);
 router.post("/login", validation({ body: validations.loginSchema }), authservice.login);
 router.post("/forgot-password", validation({ body: validations.forgotPasswordSchema }), authservice.forgotPassword);
 router.post("/reset-password", validation({ body: validations.resetPasswordSchema }), authservice.resetPassword);
