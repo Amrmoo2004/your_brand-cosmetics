@@ -13,6 +13,7 @@ export interface IUser extends Document {
   otp?: string | undefined;
   otpExpiresAt?: Date | undefined;
   googleId?: string;
+  purchasedPackages: mongoose.Types.ObjectId[];
 }
 
 const userSchema = new Schema<IUser>(
@@ -71,6 +72,12 @@ const userSchema = new Schema<IUser>(
     googleId: {
       type: String,
     },
+    purchasedPackages: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "SubscriptionPackage",
+      },
+    ],
   },
   {
     timestamps: true,

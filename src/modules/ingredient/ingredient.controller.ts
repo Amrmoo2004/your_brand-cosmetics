@@ -2,13 +2,14 @@ import { Router } from "express";
 import { ingredientService } from "./ingredient.services.js";
 import { validation } from "../../middlewares/validaition.js";
 import * as validations from "./ingredient.validation.js";
-import { protect } from "../../middlewares/auth.middleware.js";
+import { protect, restrictTo } from "../../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.post(
   "/",
   protect,
+  restrictTo("admin"),
   validation({ body: validations.createIngredientSchema }),
   ingredientService.create
 );
@@ -27,6 +28,7 @@ router.get(
 router.patch(
   "/:id",
   protect,
+  restrictTo("admin"),
   validation({
     params: validations.ingredientIdParamSchema,
     body: validations.updateIngredientSchema,
@@ -37,6 +39,7 @@ router.patch(
 router.delete(
   "/:id",
   protect,
+  restrictTo("admin"),
   validation({ params: validations.ingredientIdParamSchema }),
   ingredientService.delete
 );

@@ -34,3 +34,15 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     next(error);
   }
 };
+
+export const restrictTo = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userRole = (req as any).user.role;
+    if (!roles.includes(userRole)) {
+      return next(
+        new BadRequestException("You do not have permission to perform this action")
+      );
+    }
+    next();
+  };
+};

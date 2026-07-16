@@ -41,6 +41,50 @@ class FormulaService {
     });
   };
 
+  createFromTemplate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const { templateId } = req.params;
+    const userId = (req as any).user._id;
+
+    const { formulaTemplateModel } = await import("../DB/models/formulaTemplate.model.js");
+    const template = await formulaTemplateModel.findById(templateId).lean();
+    
+    if (!template) {
+      throw new BadRequestException("Formula Template not found");
+    }
+
+    // Check if user has access to this template's package (unless admin)
+    if ((req as any).user.role !== "admin") {
+      const { userModel } = await import("../DB/models/user.model.js");
+      const user = await userModel.findById(userId).lean();
+      const purchasedPackages = user?.purchasedPackages.map(String) || [];
+      if (!purchasedPackages.includes(String(template.packageId))) {
+        throw new BadRequestException("You have not purchased access to this template");
+      }
+    }
+
+    // Clone the template phases into an empty formula structure
+    const clonedPhases = template.phases.map(p => ({
+      phaseId: p.phaseId,
+      ingredients: [] // User will fill these in via update
+    }));
+
+    const formula = await formulaModel.create({
+      formulaName: `${template.templateName} (My Copy)`,
+      category: template.category,
+      formulaType: template.formulaType,
+      templateId: template._id,
+      phases: clonedPhases,
+      createdBy: userId,
+      status: "Draft",
+      targetBatchSize: 1 // Default
+    });
+
+    res.status(201).json({
+      message: "Formula cloned from template successfully",
+      formula,
+    });
+  };
+
   getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = (req as any).user._id;
 

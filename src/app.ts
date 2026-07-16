@@ -10,6 +10,8 @@ import ingredientRouter from "./modules/ingredient/ingredient.controller.js";
 import phaseRouter from "./modules/phase/phase.controller.js";
 import formulaRouter from "./modules/formula/formula.controller.js";
 import mbrRouter from "./modules/mbr/mbr.controller.js";
+import packageRouter from "./modules/subscriptionPackage/subscriptionPackage.controller.js";
+import templateRouter from "./modules/formulaTemplate/formulaTemplate.controller.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
 
@@ -65,6 +67,8 @@ app.use(helmet({
     // Routes
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use("/auth", authRouter);
+    app.use("/api/packages", packageRouter);
+    app.use("/api/templates", templateRouter);
     app.use("/api/categories", categoryRouter);
     app.use("/api/ingredients", ingredientRouter);
     app.use("/api/phases", phaseRouter);

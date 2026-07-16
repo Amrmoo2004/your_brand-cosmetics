@@ -62,6 +62,7 @@ export interface IFormula extends Document {
   targetpHMin?: number;
   targetpHMax?: number;
   status: FormulaStatus;
+  templateId?: mongoose.Types.ObjectId;
   phases: IFormulaPhase[];
   createdBy: mongoose.Types.ObjectId;
 }
@@ -175,6 +176,10 @@ const formulaSchema = new Schema<IFormula>(
       type: String,
       enum: FORMULA_STATUS_OPTIONS,
       default: "Draft",
+    },
+    templateId: {
+      type: Schema.Types.ObjectId,
+      ref: "FormulaTemplate",
     },
     phases: {
       type: [formulaPhaseSchema],
