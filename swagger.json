@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Auth API Documentation",
+    "title": "Cosmetics SaaS API Documentation",
     "version": "1.0.0",
-    "description": "API Documentation for the Authentication Module"
+    "description": "API Documentation for Auth, Ingredients, Formulas, and MBR Modules"
   },
   "servers": [
     {
@@ -166,6 +166,94 @@
           "idToken": {
             "type": "string",
             "example": "eyJhbGciOiJSUzI1NiIs..."
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "iconEnum": {
+            "type": "string"
+          },
+          "activeStatus": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Ingredient": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "commercialName": {
+            "type": "string"
+          },
+          "inciName": {
+            "type": "string"
+          },
+          "internalCode": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": "string"
+          }
+        }
+      },
+      "Phase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "Formula": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "formulaName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "targetBatchSize": {
+            "type": "number"
+          }
+        }
+      },
+      "MBR": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mbrCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
           }
         }
       }
@@ -348,6 +436,667 @@
           }
         }
       }
+    },
+    "/api/categories": {
+      "get": {
+        "summary": "Get all categories",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a category",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/categories/{id}": {
+      "get": {
+        "summary": "Get category by ID",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a category",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a category",
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/ingredients": {
+      "get": {
+        "summary": "Get all ingredients",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an ingredient",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/ingredients/stats": {
+      "get": {
+        "summary": "Get ingredient stats",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/ingredients/{id}": {
+      "get": {
+        "summary": "Get ingredient by ID",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an ingredient",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an ingredient",
+        "tags": [
+          "Ingredients"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/phases": {
+      "get": {
+        "summary": "Get all phases",
+        "tags": [
+          "Phases"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a phase",
+        "tags": [
+          "Phases"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/phases/{id}": {
+      "get": {
+        "summary": "Get phase by ID",
+        "tags": [
+          "Phases"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a phase",
+        "tags": [
+          "Phases"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a phase",
+        "tags": [
+          "Phases"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/formulas": {
+      "get": {
+        "summary": "Get all formulas",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a formula",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/formulas/{id}": {
+      "get": {
+        "summary": "Get formula by ID",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a formula",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a formula",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/api/formulas/{id}/status": {
+      "patch": {
+        "summary": "Update formula status",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        }
+      }
+    },
+    "/api/formulas/{id}/validate": {
+      "get": {
+        "summary": "Validate a formula",
+        "tags": [
+          "Formulas"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Validation complete"
+          }
+        }
+      }
+    },
+    "/api/mbrs": {
+      "get": {
+        "summary": "Get all MBRs",
+        "tags": [
+          "MBRs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an MBR",
+        "tags": [
+          "MBRs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/api/mbrs/{id}": {
+      "get": {
+        "summary": "Get MBR by ID",
+        "tags": [
+          "MBRs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Save MBR progress (Update)",
+        "tags": [
+          "MBRs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an MBR",
+        "tags": [
+          "MBRs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Categories"
+    },
+    {
+      "name": "Ingredients"
+    },
+    {
+      "name": "Phases"
+    },
+    {
+      "name": "Formulas"
+    },
+    {
+      "name": "MBRs"
+    }
+  ]
 }

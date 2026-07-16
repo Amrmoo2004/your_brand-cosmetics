@@ -5,6 +5,11 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import compression from "compression";
 import authRouter from "./modules/auth/auth.controller.js";
+import categoryRouter from "./modules/ingredientCategory/ingredientCategory.controller.js";
+import ingredientRouter from "./modules/ingredient/ingredient.controller.js";
+import phaseRouter from "./modules/phase/phase.controller.js";
+import formulaRouter from "./modules/formula/formula.controller.js";
+import mbrRouter from "./modules/mbr/mbr.controller.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
 
@@ -60,6 +65,11 @@ app.use(helmet({
     // Routes
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use("/auth", authRouter);
+    app.use("/api/categories", categoryRouter);
+    app.use("/api/ingredients", ingredientRouter);
+    app.use("/api/phases", phaseRouter);
+    app.use("/api/formulas", formulaRouter);
+    app.use("/api/mbrs", mbrRouter);
 
     app.get("/", (req: Request, res: Response) => {
         res.send({ message: "Hello, the server is secure and running!" });

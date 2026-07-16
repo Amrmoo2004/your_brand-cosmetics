@@ -208,11 +208,11 @@ class AuthService {
       user = await userModel.create({
         firstName: given_name || "User",
         lastName: family_name || "",
-        companyName: "N/A", 
-        country: "N/A",    
+        companyName: "N/A",
+        country: "N/A",
         email,
         googleId: sub,
-        isVerified: true, 
+        isVerified: true,
       });
     } else {
       if (!user.googleId) {
