@@ -323,6 +323,100 @@
             }
           }
         }
+      },
+      "CreateTemplateRequest": {
+        "type": "object",
+        "required": [
+          "templateName",
+          "category",
+          "formulaType",
+          "packageId"
+        ],
+        "properties": {
+          "templateName": {
+            "type": "string",
+            "example": "Luxury Hydrating Serum"
+          },
+          "category": {
+            "type": "string",
+            "example": "Skincare"
+          },
+          "formulaType": {
+            "type": "string",
+            "example": "Serum"
+          },
+          "packageId": {
+            "type": "string",
+            "example": "64a2f9b8c3f4e2a1b2c3d4e5"
+          },
+          "description": {
+            "type": "string",
+            "example": "Premium hydrating serum"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "phaseId": {
+                  "type": "string",
+                  "example": "64a2f9b8c3f4e2a1b2c3d4e6"
+                },
+                "phaseName": {
+                  "type": "string",
+                  "example": "Water Phase"
+                },
+                "minPercentage": {
+                  "type": "number",
+                  "example": 0
+                },
+                "maxPercentage": {
+                  "type": "number",
+                  "example": 98
+                }
+              }
+            }
+          },
+          "methodSteps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "Heat to 75C"
+            }
+          },
+          "activeStatus": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "CreatePackageRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "price"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Complete Access"
+          },
+          "description": {
+            "type": "string",
+            "example": "All features"
+          },
+          "price": {
+            "type": "number",
+            "example": 599
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "AI Co-pilot"
+            }
+          }
+        }
       }
     }
   },
@@ -880,32 +974,6 @@
             "description": "Success"
           }
         }
-      },
-      "post": {
-        "summary": "Create a formula from scratch (Admin)",
-        "tags": [
-          "Formulas"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateFormulaRequest"
-              }
-            }
-          }
-        }
       }
     },
     "/api/formulas/{id}": {
@@ -1189,6 +1257,16 @@
           "201": {
             "description": "Created"
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePackageRequest"
+              }
+            }
+          }
         }
       }
     },
@@ -1277,6 +1355,16 @@
           "201": {
             "description": "Created"
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              }
+            }
+          }
         }
       }
     },
@@ -1336,7 +1424,7 @@
     },
     "/api/formulas/from-template/{templateId}": {
       "post": {
-        "summary": "Clone a formula from a template",
+        "summary": "User: Clone a template into a new formula draft",
         "tags": [
           "Formulas"
         ],

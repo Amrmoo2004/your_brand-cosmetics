@@ -2,7 +2,7 @@ import { Router } from "express";
 import { formulaService } from "./formula.services.js";
 import { validation } from "../../middlewares/validaition.js";
 import * as validations from "./formula.validation.js";
-import { protect } from "../../middlewares/auth.middleware.js";
+import { protect, restrictTo } from "../../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -11,6 +11,7 @@ router.post("/from-template/:templateId", protect, formulaService.createFromTemp
 router.post(
   "/",
   protect,
+  restrictTo("admin"),
   validation({ body: validations.createFormulaSchema }),
   formulaService.create
 );
