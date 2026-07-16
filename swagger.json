@@ -417,6 +417,159 @@
             }
           }
         }
+      },
+      "CreatePhaseRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "code"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Water Phase"
+          },
+          "code": {
+            "type": "string",
+            "example": "PHASE-A"
+          },
+          "description": {
+            "type": "string",
+            "example": "Base and solvent system"
+          },
+          "assignedCategories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "64a2f9b8c3f4e2a1b2c3d4e5"
+            }
+          }
+        }
+      },
+      "CreateCategoryRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "code"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Solvents"
+          },
+          "code": {
+            "type": "string",
+            "example": "SOLV"
+          },
+          "description": {
+            "type": "string",
+            "example": "Primary solvents for formulas"
+          },
+          "displayOrder": {
+            "type": "number",
+            "example": 1
+          },
+          "iconEnum": {
+            "type": "string",
+            "example": "Water"
+          },
+          "isMinAllowed": {
+            "type": "boolean",
+            "example": true
+          },
+          "isMaxAllowed": {
+            "type": "boolean",
+            "example": true
+          },
+          "isRequiredFormula": {
+            "type": "boolean",
+            "example": false
+          },
+          "isAutoValidationEnabled": {
+            "type": "boolean",
+            "example": true
+          },
+          "activeStatus": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "CreateIngredientRequest": {
+        "type": "object",
+        "required": [
+          "commercialName",
+          "inciName",
+          "categoryId",
+          "internalCode"
+        ],
+        "properties": {
+          "commercialName": {
+            "type": "string",
+            "example": "Purified Water"
+          },
+          "inciName": {
+            "type": "string",
+            "example": "Aqua"
+          },
+          "categoryId": {
+            "type": "string",
+            "example": "64a2f9b8c3f4e2a1b2c3d4e5"
+          },
+          "internalCode": {
+            "type": "string",
+            "example": "AQ-001"
+          },
+          "supplier": {
+            "type": "string",
+            "example": "Local Supplier"
+          },
+          "primaryFunction": {
+            "type": "string",
+            "example": "Solvent"
+          },
+          "usageGuidelines": {
+            "type": "object",
+            "properties": {
+              "minPercentage": {
+                "type": "number",
+                "example": 0
+              },
+              "maxPercentage": {
+                "type": "number",
+                "example": 80
+              },
+              "defaultPercentage": {
+                "type": "number",
+                "example": 50
+              },
+              "pHMin": {
+                "type": "number",
+                "example": 5
+              },
+              "pHMax": {
+                "type": "number",
+                "example": 7
+              },
+              "tempStabilityValue": {
+                "type": "number",
+                "example": 100
+              },
+              "solubility": {
+                "type": "string",
+                "example": "Water Soluble"
+              }
+            }
+          },
+          "originSource": {
+            "type": "string",
+            "example": "Natural Origin"
+          },
+          "compatibilityScore": {
+            "type": "number",
+            "example": 100
+          }
+        }
       }
     }
   },
@@ -629,6 +782,16 @@
           "201": {
             "description": "Created"
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryRequest"
+              }
+            }
+          }
         }
       }
     },
@@ -742,6 +905,16 @@
         "responses": {
           "201": {
             "description": "Created"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIngredientRequest"
+              }
+            }
           }
         }
       }
@@ -874,6 +1047,16 @@
         "responses": {
           "201": {
             "description": "Created"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePhaseRequest"
+              }
+            }
           }
         }
       }
