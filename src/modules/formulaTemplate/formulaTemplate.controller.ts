@@ -3,6 +3,7 @@ import { formulaTemplateService } from "./formulaTemplate.services.js";
 import { validation } from "../../middlewares/validaition.js";
 import * as validations from "./formulaTemplate.validation.js";
 import { protect, restrictTo } from "../../middlewares/auth.middleware.js";
+import { requireActiveSubscription } from "../../middlewares/subscription.middleware.js";
 
 const router = Router();
 
@@ -16,11 +17,12 @@ router.post(
 );
 
 // Everyone can view templates (service filters by purchased packages for normal users)
-router.get("/", protect, formulaTemplateService.getAll);
+router.get("/", protect, requireActiveSubscription, formulaTemplateService.getAll);
 
 router.get(
   "/:id",
   protect,
+  requireActiveSubscription,
   validation({ params: validations.templateIdParamSchema }),
   formulaTemplateService.getById
 );

@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// تحديد أنواع البيانات اللي الدالة بتقبلها
 interface SendEmailParams {
     from?: string;
     to?: string | string[];
@@ -16,7 +15,7 @@ interface SendEmailParams {
 }
 
 export async function sendemails({
-    from = process.env.app_email as string,
+    from = process.env.BREVO_FROM_EMAIL as string, 
     to = "",
     cc = "",
     bcc = "",
@@ -27,25 +26,26 @@ export async function sendemails({
 }: SendEmailParams = {}): Promise<SentMessageInfo> { 
 
     const transporter = nodemailer.createTransport({
-        service: "gmail",
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false, 
+        host: process.env.BREVO_SMTP_HOST, 
+        port: Number(process.env.BREVO_SMTP_PORT) || 587,
+        secure: false,
         pool: true, 
-        tls: {
-            ciphers: "SSLv3",
-            rejectUnauthorized: false
-        },
         auth: {
-            user: process.env.app_email,
-            pass: process.env.app_password,
+            user: process.env.BREVO_SMTP_USER,
+            pass: process.env.BREVO_SMTP_PASS,
         },
     });
 
     try {
         const info = await transporter.sendMail({
             from: `"YOUR BRAND COSMETICS" <${from}>`,
-            to, cc, bcc, text, html, subject, attachments
+            to, 
+            cc, 
+            bcc, 
+            text, 
+            html, 
+            subject, 
+            attachments
         });
 
         return info;

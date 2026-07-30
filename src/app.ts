@@ -12,6 +12,8 @@ import formulaRouter from "./modules/formula/formula.controller.js";
 import mbrRouter from "./modules/mbr/mbr.controller.js";
 import packageRouter from "./modules/subscriptionPackage/subscriptionPackage.controller.js";
 import templateRouter from "./modules/formulaTemplate/formulaTemplate.controller.js";
+import paymentRouter from "./modules/payment/payment.controller.js";
+import { startSubscriptionCron } from "./services/subscriptionCron.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
 
@@ -47,7 +49,6 @@ app.use(helmet({
     });
     app.use(globalLimiter);
 
-    // Auth-specific: 30 login attempts per 15 minutes per IP (stricter)
     const authLimiter = rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 30,
@@ -64,6 +65,9 @@ app.use(helmet({
 
     await import("./modules/DB/db.connect.js").then(({ default: connectDB }) => connectDB());
 
+    // ── Start Cron Jobs ──────────────────────────────────────────────────────────
+    startSubscriptionCron();
+
     // Routes
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use("/auth", authRouter);
@@ -74,6 +78,7 @@ app.use(helmet({
     app.use("/api/phases", phaseRouter);
     app.use("/api/formulas", formulaRouter);
     app.use("/api/mbrs", mbrRouter);
+    app.use("/api/payments", paymentRouter);
 
     app.get("/", (req: Request, res: Response) => {
         res.send({ message: "Hello, the server is secure and running!" });

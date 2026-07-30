@@ -3,31 +3,33 @@ import { formulaService } from "./formula.services.js";
 import { validation } from "../../middlewares/validaition.js";
 import * as validations from "./formula.validation.js";
 import { protect, restrictTo } from "../../middlewares/auth.middleware.js";
+import { requireActiveSubscription } from "../../middlewares/subscription.middleware.js";
 
 const router = Router();
 
-router.post("/from-template/:templateId", protect, formulaService.createFromTemplate);
+// Apply authentication and active subscription check to all formula routes
+router.use(protect);
+router.use(requireActiveSubscription);
+
+router.post("/from-template/:templateId", formulaService.createFromTemplate);
 
 router.post(
   "/",
-  protect,
   restrictTo("admin"),
   validation({ body: validations.createFormulaSchema }),
   formulaService.create
 );
 
-router.get("/", protect, formulaService.getAll);
+router.get("/", formulaService.getAll);
 
 router.get(
   "/:id",
-  protect,
   validation({ params: validations.formulaIdParamSchema }),
   formulaService.getById
 );
 
 router.patch(
   "/:id",
-  protect,
   validation({
     params: validations.formulaIdParamSchema,
     body: validations.updateFormulaSchema,
@@ -37,7 +39,6 @@ router.patch(
 
 router.patch(
   "/:id/status",
-  protect,
   validation({
     params: validations.formulaIdParamSchema,
     body: validations.updateFormulaStatusSchema,
@@ -47,14 +48,12 @@ router.patch(
 
 router.get(
   "/:id/validate",
-  protect,
   validation({ params: validations.formulaIdParamSchema }),
   formulaService.validate
 );
 
 router.delete(
   "/:id",
-  protect,
   validation({ params: validations.formulaIdParamSchema }),
   formulaService.delete
 );

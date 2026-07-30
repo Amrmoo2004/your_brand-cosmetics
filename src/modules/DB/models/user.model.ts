@@ -14,6 +14,13 @@ export interface IUser extends Document {
   otpExpiresAt?: Date | undefined;
   googleId?: string;
   purchasedPackages: mongoose.Types.ObjectId[];
+  // Card Tokenization (token is stored encrypted — never raw card data)
+  cardToken?: string;
+  cardLastFour?: string;
+  cardBrand?: string;
+  // Subscription Management
+  subscriptionEndDate?: Date;
+  planStatus: "none" | "active" | "expired";
 }
 
 const userSchema = new Schema<IUser>(
@@ -78,6 +85,26 @@ const userSchema = new Schema<IUser>(
         ref: "SubscriptionPackage",
       },
     ],
+    // Card Tokenization
+    cardToken: {
+      type: String,
+    },
+    cardLastFour: {
+      type: String,
+      maxlength: 4,
+    },
+    cardBrand: {
+      type: String,
+    },
+    // Subscription Management
+    subscriptionEndDate: {
+      type: Date,
+    },
+    planStatus: {
+      type: String,
+      enum: ["none", "active", "expired"],
+      default: "none",
+    },
   },
   {
     timestamps: true,

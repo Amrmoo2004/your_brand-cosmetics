@@ -5,6 +5,7 @@ export interface ISubscriptionPackage extends Document {
   description: string;
   price: number;
   currency: string;
+  durationDays: number;
   features: string[];
   activeStatus: boolean;
   createdBy: mongoose.Types.ObjectId;
@@ -30,6 +31,12 @@ const subscriptionPackageSchema = new Schema<ISubscriptionPackage>(
     currency: {
       type: String,
       default: "USD",
+    },
+    durationDays: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 365,
     },
     features: {
       type: [String],
