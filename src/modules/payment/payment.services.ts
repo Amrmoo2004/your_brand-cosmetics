@@ -132,7 +132,14 @@ class PaymentService {
       if (rawBody && receivedSignature && req.headers["x-kashier-signature"]) {
         const isValid = verifyKashierWebhook(rawBody, receivedSignature, secretKey);
         if (!isValid) {
+          const maskedKey = secretKey.length > 10
+            ? `${secretKey.substring(0, 5)}...${secretKey.substring(secretKey.length - 5)}`
+            : "too short";
           console.error("[Kashier Webhook] Invalid HMAC signature — possible tampering");
+          console.error(`[Kashier Debug] Secret Key Length: ${secretKey.length} (Masked: ${maskedKey})`);
+          console.error(`[Kashier Debug] Received Signature: ${receivedSignature}`);
+          console.error(`[Kashier Debug] Raw Body Length: ${rawBody.length}`);
+          console.error(`[Kashier Debug] Raw Body String: ${rawBody.toString("utf8")}`);
           res.status(403).json({ message: "Invalid signature" });
           return;
         }
