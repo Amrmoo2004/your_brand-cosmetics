@@ -63,12 +63,12 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
     const secretKeyPart1 = secretKey.includes("$") ? secretKey.split("$")[0] : secretKey;
     const secretKeyPart2 = secretKey.includes("$") ? secretKey.split("$")[1] : secretKey;
 
-    const keysToTest: { name: string; key: string }[] = [
+    const keysToTest = [
       { name: "Full SecretKey", key: secretKey },
       { name: "SecretKey Part1 (before $)", key: secretKeyPart1 },
       { name: "SecretKey Part2 (after $)", key: secretKeyPart2 },
       { name: "API Key", key: apiKey },
-    ].filter((k) => k.key);
+    ].filter((k): k is { name: string; key: string } => !!k.key);
 
     // Build candidate strings
     const queryString = data.signatureKeys
