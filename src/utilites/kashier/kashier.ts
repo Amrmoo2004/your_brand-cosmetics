@@ -64,28 +64,38 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
       .map((key: string) => `${key}=${data[key]}`)
       .join("&");
 
-    const format1 = `/api/webhooks/kashier?${queryString}`;
+    // Path MUST match exactly the Webhook URL registered in Kashier dashboard
+    const format1 = `/api/payments/webhook?${queryString}`;
     const format2 = `?${queryString}`;
     const format3 = queryString;
 
-    const hash = (s: string) =>
-      crypto.createHmac("sha256", secretKey).update(s).digest("hex");
+    const hmac = (key: string, s: string) =>
+      crypto.createHmac("sha256", key).update(s).digest("hex");
 
-    const h1 = hash(format1);
-    const h2 = hash(format2);
-    const h3 = hash(format3);
+    const h1 = hmac(secretKey, format1);
+    const h2 = hmac(secretKey, format2);
+    const h3 = hmac(secretKey, format3);
+
+    // Format 4 & 5: try with KASHIER_API_KEY (Kashier uses a separate webhook key)
+    const apiKey = process.env.KASHIER_API_KEY || "";
+    const h4 = apiKey ? hmac(apiKey, format1) : "";
+    const h5 = apiKey ? hmac(apiKey, format3) : "";
 
     const match1 = h1 === signature;
     const match2 = h2 === signature;
     const match3 = h3 === signature;
+    const match4 = !!apiKey && h4 === signature;
+    const match5 = !!apiKey && h5 === signature;
 
     console.log("--- Kashier Format Tests ---");
-    console.log(`[Format 1 - Full Path ] Match? ${match1}  →  ${format1.substring(0, 80)}...`);
-    console.log(`[Format 2 - ?+Query   ] Match? ${match2}`);
-    console.log(`[Format 3 - Bare Query] Match? ${match3}`);
+    console.log(`[Format 1 - SecretKey + Full Path] Match? ${match1}`);
+    console.log(`[Format 2 - SecretKey + ?+Query  ] Match? ${match2}`);
+    console.log(`[Format 3 - SecretKey + BareQuery ] Match? ${match3}`);
+    console.log(`[Format 4 - ApiKey   + Full Path  ] Match? ${match4}`);
+    console.log(`[Format 5 - ApiKey   + BareQuery  ] Match? ${match5}`);
     console.log("----------------------------");
 
-    return match1 || match2 || match3;
+    return match1 || match2 || match3 || match4 || match5;
   } catch (error) {
     console.error("[Kashier] Error verifying webhook signature:", error);
     return false;
