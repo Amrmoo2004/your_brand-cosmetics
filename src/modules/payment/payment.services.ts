@@ -129,8 +129,8 @@ class PaymentService {
         (req.body?.hash as string);
 
       if (receivedSignature) {
-        // Determine which URL path Kashier is calling (must match what's in your Kashier dashboard)
-        const webhookPath = req.path || "/api/webhooks/kashier";
+        // MUST match exactly the URL path registered in your Kashier dashboard
+        const webhookPath = "/api/webhooks/kashier";
         const isValid = verifyKashierWebhook(req.body, receivedSignature, secretKey, webhookPath);
         if (!isValid) {
           console.error("[Kashier Webhook] Invalid HMAC signature — possible tampering");
