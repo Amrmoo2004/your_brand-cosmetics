@@ -59,45 +59,73 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
       return false;
     }
 
-    // Build query string in the exact order Kashier specifies via signatureKeys
+    const apiKey = process.env.KASHIER_API_KEY || "";
+    const secretKeyPart1 = secretKey.includes("$") ? secretKey.split("$")[0] : secretKey;
+    const secretKeyPart2 = secretKey.includes("$") ? secretKey.split("$")[1] : secretKey;
+
+    const keysToTest: { name: string; key: string }[] = [
+      { name: "Full SecretKey", key: secretKey },
+      { name: "SecretKey Part1 (before $)", key: secretKeyPart1 },
+      { name: "SecretKey Part2 (after $)", key: secretKeyPart2 },
+      { name: "API Key", key: apiKey },
+    ].filter((k) => k.key);
+
+    // Build candidate strings
     const queryString = data.signatureKeys
       .map((key: string) => `${key}=${data[key]}`)
       .join("&");
 
-    // Path MUST match exactly the Webhook URL registered in Kashier dashboard
-    const format1 = `/api/payments/webhook?${queryString}`;
-    const format2 = `?${queryString}`;
-    const format3 = queryString;
+    const valuesOnlyDot = data.signatureKeys
+      .map((key: string) => `${data[key]}`)
+      .join(".");
 
-    const hmac = (key: string, s: string) =>
-      crypto.createHmac("sha256", key).update(s).digest("hex");
+    const valuesOnlyAmp = data.signatureKeys
+      .map((key: string) => `${data[key]}`)
+      .join("&");
 
-    const h1 = hmac(secretKey, format1);
-    const h2 = hmac(secretKey, format2);
-    const h3 = hmac(secretKey, format3);
+    const stdFormat = `${data.merchantId}.${data.merchantOrderId || data.kashierOrderId}.${data.amount}.${data.currency}`;
 
-    // Format 4 & 5: try with KASHIER_API_KEY (Kashier uses a separate webhook key)
-    const apiKey = process.env.KASHIER_API_KEY || "";
-    const h4 = apiKey ? hmac(apiKey, format1) : "";
-    const h5 = apiKey ? hmac(apiKey, format3) : "";
+    const candidateStrings: { name: string; str: string }[] = [
+      { name: "HTTPS Full URL (payments)", str: `https://your-brand-formulator.duckdns.org/api/payments/webhook?${queryString}` },
+      { name: "HTTP Full URL (payments)", str: `http://your-brand-formulator.duckdns.org/api/payments/webhook?${queryString}` },
+      { name: "Path (/api/payments/webhook)", str: `/api/payments/webhook?${queryString}` },
+      { name: "Path (/api/webhooks/kashier)", str: `/api/webhooks/kashier?${queryString}` },
+      { name: "Query with ?", str: `?${queryString}` },
+      { name: "Bare Query String", str: queryString },
+      { name: "Values joined with .", str: valuesOnlyDot },
+      { name: "Values joined with &", str: valuesOnlyAmp },
+      { name: "Standard MID.order.amount.currency", str: stdFormat },
+    ];
 
-    const match1 = h1 === signature;
-    const match2 = h2 === signature;
-    const match3 = h3 === signature;
-    const match4 = !!apiKey && h4 === signature;
-    const match5 = !!apiKey && h5 === signature;
+    console.log("--- Kashier Extended Format Tests ---");
+    let matched = false;
 
-    console.log("--- Kashier Format Tests ---");
-    console.log(`[Format 1 - SecretKey + Full Path] Match? ${match1}`);
-    console.log(`[Format 2 - SecretKey + ?+Query  ] Match? ${match2}`);
-    console.log(`[Format 3 - SecretKey + BareQuery ] Match? ${match3}`);
-    console.log(`[Format 4 - ApiKey   + Full Path  ] Match? ${match4}`);
-    console.log(`[Format 5 - ApiKey   + BareQuery  ] Match? ${match5}`);
-    console.log("----------------------------");
+    for (const kObj of keysToTest) {
+      for (const sObj of candidateStrings) {
+        const calculated = crypto
+          .createHmac("sha256", kObj.key)
+          .update(sObj.str)
+          .digest("hex");
 
-    return match1 || match2 || match3 || match4 || match5;
+        const isMatch = calculated.toLowerCase() === signature.toLowerCase();
+        if (isMatch) {
+          console.log(`✅ MATCH FOUND! Key: [${kObj.name}] | Format: [${sObj.name}]`);
+          console.log(`   String hashed: "${sObj.str}"`);
+          matched = true;
+          return true;
+        }
+      }
+    }
+
+    console.log("❌ No format matched among all candidates.");
+    console.log(`   Sample hash (Full Secret + Path): ${crypto.createHmac("sha256", secretKey).update(`/api/payments/webhook?${queryString}`).digest("hex")}`);
+    console.log(`   Expected signature:              ${signature}`);
+    console.log("-------------------------------------");
+
+    return matched;
   } catch (error) {
     console.error("[Kashier] Error verifying webhook signature:", error);
     return false;
   }
 }
+
