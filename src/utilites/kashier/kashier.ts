@@ -24,36 +24,60 @@ export const generateKashierHash = (
 };
 
 /**
- * @param rawBody - The raw request body buffer
- * @param receivedSignature - The signature from Kashier's callback header/query
- * @param secretKey - Your Kashier secret key
- * @returns true if signature is valid
+ * Verify Kashier webhook signature using the signatureKeys array
+ * that Kashier includes in every webhook payload.
+ *
+ * Kashier's algorithm:
+ *  1. Read data.signatureKeys[] from the webhook body
+ *  2. Build a query string: key1=val1&key2=val2 (in the order Kashier provides)
+ *  3. Prepend the webhook path: /path?key1=val1&...
+ *  4. HMAC-SHA256 the resulting string with your Secret Key
+ *
+ * @param payload        - The fully parsed webhook JSON body (req.body)
+ * @param receivedSig    - The signature value from Kashier (header / body.data.hash)
+ * @param secretKey      - Your KASHIER_SECRET_KEY
+ * @param webhookPath    - The URL path registered in your Kashier dashboard
+ * @returns true if the signature is valid
  */
 export const verifyKashierWebhook = (
-  rawBody: Buffer,
-  receivedSignature: string,
-  secretKey: string
+  payload: any,
+  receivedSig: string,
+  secretKey: string,
+  webhookPath: string
 ): boolean => {
-  if (!receivedSignature || !secretKey) {
-    return false;
-  }
-
-  const calculatedSignature = crypto
-    .createHmac("sha256", secretKey)
-    .update(rawBody)
-    .digest("hex");
-
-  // Timing-safe comparison to prevent timing attacks
   try {
-    const sigBuffer = Buffer.from(receivedSignature, "hex");
-    const calcBuffer = Buffer.from(calculatedSignature, "hex");
+    if (!receivedSig || !secretKey) return false;
 
-    if (sigBuffer.length !== calcBuffer.length) {
+    const data = payload?.data;
+    if (!data || !Array.isArray(data.signatureKeys)) {
+      console.error("[Kashier] Missing data.signatureKeys in payload");
       return false;
     }
 
-    return crypto.timingSafeEqual(sigBuffer, calcBuffer);
-  } catch {
+    // Build: key1=value1&key2=value2 in the exact order Kashier specifies
+    const queryString = data.signatureKeys
+      .map((key: string) => `${key}=${data[key]}`)
+      .join("&");
+
+    // Full string to hash: path?query
+    const rawString = `${webhookPath}?${queryString}`;
+    console.log("[Kashier Debug] String to hash:", rawString);
+
+    const calculatedSig = crypto
+      .createHmac("sha256", secretKey)
+      .update(rawString)
+      .digest("hex");
+
+    console.log("[Kashier Debug] Calculated sig:", calculatedSig);
+    console.log("[Kashier Debug] Received sig:  ", receivedSig);
+
+    // Constant-time comparison
+    const calcBuf = Buffer.from(calculatedSig, "hex");
+    const recvBuf = Buffer.from(receivedSig,   "hex");
+    if (calcBuf.length !== recvBuf.length) return false;
+    return crypto.timingSafeEqual(calcBuf, recvBuf);
+  } catch (err) {
+    console.error("[Kashier] Error verifying webhook signature:", err);
     return false;
   }
 };

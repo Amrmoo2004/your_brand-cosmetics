@@ -120,42 +120,43 @@ class PaymentService {
         return;
       }
 
-      // 1. Verify HMAC signature from Kashier
+      // 1. Verify HMAC signature using Kashier's signatureKeys-based algorithm
+      // Kashier sends the signature in the x-kashier-signature header
       const receivedSignature =
         (req.headers["x-kashier-signature"] as string) ||
         (req.query.signature as string) ||
+        (req.body?.data?.hash as string) ||
         (req.body?.hash as string);
 
-      const rawBody = (req as any).rawBody as Buffer | undefined;
-
-      // If we have raw body and a signature header, verify cryptographically
-      if (rawBody && receivedSignature && req.headers["x-kashier-signature"]) {
-        const isValid = verifyKashierWebhook(rawBody, receivedSignature, secretKey);
+      if (receivedSignature) {
+        // Determine which URL path Kashier is calling (must match what's in your Kashier dashboard)
+        const webhookPath = req.path || "/api/webhooks/kashier";
+        const isValid = verifyKashierWebhook(req.body, receivedSignature, secretKey, webhookPath);
         if (!isValid) {
-          const maskedKey = secretKey.length > 10
-            ? `${secretKey.substring(0, 5)}...${secretKey.substring(secretKey.length - 5)}`
-            : "too short";
           console.error("[Kashier Webhook] Invalid HMAC signature — possible tampering");
-          console.error(`[Kashier Debug] Secret Key Length: ${secretKey.length} (Masked: ${maskedKey})`);
-          console.error(`[Kashier Debug] Received Signature: ${receivedSignature}`);
-          console.error(`[Kashier Debug] Raw Body Length: ${rawBody.length}`);
-          console.error(`[Kashier Debug] Raw Body String: ${rawBody.toString("utf8")}`);
           res.status(403).json({ message: "Invalid signature" });
           return;
         }
       }
 
-      // 2. Extract data from webhook body
+      // 2. Extract data from webhook body — Kashier nests fields inside req.body.data
+      const webhookData = req.body?.data ?? req.body;
       const {
         merchantOrderId,
         transactionId,
         orderStatus,
         paymentStatus,
+        status,
         cardToken,
         cardLastFour,
         cardBrand,
         paymentMethod,
-      } = req.body;
+        method,
+      } = webhookData;
+
+      // Support both "status" (new format) and "orderStatus/paymentStatus" (old format)
+      const resolvedOrderStatus  = orderStatus  ?? status;
+      const resolvedPaymentStatus = paymentStatus ?? status;
 
       if (!merchantOrderId) {
         console.error("[Kashier Webhook] Missing merchantOrderId in payload");
@@ -178,18 +179,19 @@ class PaymentService {
         return;
       }
 
+
       // 5. Determine payment status
       const isSuccess =
-        orderStatus === "SUCCESS" ||
-        orderStatus === "CAPTURED" ||
-        paymentStatus === "SUCCESS" ||
-        paymentStatus === "CAPTURED";
+        resolvedOrderStatus === "SUCCESS" ||
+        resolvedOrderStatus === "CAPTURED" ||
+        resolvedPaymentStatus === "SUCCESS" ||
+        resolvedPaymentStatus === "CAPTURED";
 
       if (isSuccess) {
         // Update order to paid
         order.status = "paid";
         order.transactionId = transactionId || undefined;
-        order.paymentMethod = paymentMethod || undefined;
+        order.paymentMethod = paymentMethod || method || undefined;
         order.paidAt = new Date();
 
         // Save card token on order if provided
