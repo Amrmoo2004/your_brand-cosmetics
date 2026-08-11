@@ -1,4 +1,4 @@
-import { Router, raw } from "express";
+import { Router } from "express";
 import { paymentService } from "./payment.services.js";
 import { validation } from "../../middlewares/validaition.js";
 import * as validations from "./payment.validation.js";
@@ -45,20 +45,8 @@ router.get(
 );
 
 // ── Webhook Route (NO auth — Kashier calls this server-to-server) ──────────
-// Uses raw body parser to preserve the body for HMAC signature verification
 router.post(
   "/webhook",
-  raw({ type: "application/json" }),
-  (req, _res, next) => {
-    // Store raw body for HMAC verification, then parse JSON
-    (req as any).rawBody = req.body;
-    try {
-      req.body = JSON.parse(req.body.toString());
-    } catch {
-      req.body = {};
-    }
-    next();
-  },
   paymentService.handleWebhook
 );
 

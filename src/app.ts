@@ -13,6 +13,7 @@ import mbrRouter from "./modules/mbr/mbr.controller.js";
 import packageRouter from "./modules/subscriptionPackage/subscriptionPackage.controller.js";
 import templateRouter from "./modules/formulaTemplate/formulaTemplate.controller.js";
 import paymentRouter from "./modules/payment/payment.controller.js";
+import { paymentService } from "./modules/payment/payment.services.js";
 import { startSubscriptionCron } from "./services/subscriptionCron.js";
 import swaggerUi from "swagger-ui-express";
 import fs from "fs";
@@ -61,7 +62,11 @@ app.use(helmet({
 
     // ── Standard Middleware ─────────────────────────────────────────────────────
     dotenv.config();
-    app.use(express.json());
+    app.use(express.json({
+        verify: (req: any, res, buf) => {
+            req.rawBody = buf;
+        }
+    }));
 
     await import("./modules/DB/db.connect.js").then(({ default: connectDB }) => connectDB());
 
@@ -79,6 +84,7 @@ app.use(helmet({
     app.use("/api/formulas", formulaRouter);
     app.use("/api/mbrs", mbrRouter);
     app.use("/api/payments", paymentRouter);
+    app.post("/api/webhooks/kashier", paymentService.handleWebhook);
 
     app.get("/", (req: Request, res: Response) => {
         res.send({ message: "Hello, the server is secure and running!" });
