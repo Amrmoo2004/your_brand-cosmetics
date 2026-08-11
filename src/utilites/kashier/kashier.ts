@@ -24,29 +24,23 @@ export const generateKashierHash = (
 };
 
 /**
- * Verify Kashier webhook signature using the signatureKeys array
- * that Kashier includes in every webhook payload.
+ * Verify Kashier webhook signature.
  *
- * Kashier's algorithm:
- *  1. Read data.signatureKeys[] from the webhook body
- *  2. Build a query string: key1=val1&key2=val2 (in the order Kashier provides)
- *  3. Prepend the webhook path: /path?key1=val1&...
- *  4. HMAC-SHA256 the resulting string with your Secret Key
+ * Tries 3 possible string formats that Kashier may use to sign the payload:
+ *   Format 1: /api/webhooks/kashier?key=val&key=val   (full path + query)
+ *   Format 2: ?key=val&key=val                         (query only with ?)
+ *   Format 3:  key=val&key=val                         (bare query string)
  *
- * @param payload        - The fully parsed webhook JSON body (req.body)
- * @param receivedSig    - The signature value from Kashier (header / body.data.hash)
- * @param secretKey      - Your KASHIER_SECRET_KEY
- * @param webhookPath    - The URL path registered in your Kashier dashboard
- * @returns true if the signature is valid
+ * Logs which format matched so we can hard-code it permanently afterwards.
+ *
+ * @param payload   - Fully parsed webhook JSON body (req.body)
+ * @param signature - Signature sent by Kashier (header / body field)
+ * @returns true if any format matches
  */
-export const verifyKashierWebhook = (
-  payload: any,
-  receivedSig: string,
-  secretKey: string,
-  webhookPath: string
-): boolean => {
+export function verifyKashierWebhook(payload: any, signature: string): boolean {
   try {
-    if (!receivedSig || !secretKey) return false;
+    const secretKey = process.env.KASHIER_SECRET_KEY || "";
+    if (!secretKey || !signature) return false;
 
     const data = payload?.data;
     if (!data || !Array.isArray(data.signatureKeys)) {
@@ -54,30 +48,35 @@ export const verifyKashierWebhook = (
       return false;
     }
 
-    // Build: key1=value1&key2=value2 in the exact order Kashier specifies
+    // Build query string in the exact order Kashier specifies via signatureKeys
     const queryString = data.signatureKeys
       .map((key: string) => `${key}=${data[key]}`)
       .join("&");
 
-    // Full string to hash: path?query
-    const rawString = `${webhookPath}?${queryString}`;
-    console.log("[Kashier Debug] String to hash:", rawString);
+    const format1 = `/api/webhooks/kashier?${queryString}`;
+    const format2 = `?${queryString}`;
+    const format3 = queryString;
 
-    const calculatedSig = crypto
-      .createHmac("sha256", secretKey)
-      .update(rawString)
-      .digest("hex");
+    const hash = (s: string) =>
+      crypto.createHmac("sha256", secretKey).update(s).digest("hex");
 
-    console.log("[Kashier Debug] Calculated sig:", calculatedSig);
-    console.log("[Kashier Debug] Received sig:  ", receivedSig);
+    const h1 = hash(format1);
+    const h2 = hash(format2);
+    const h3 = hash(format3);
 
-    // Constant-time comparison
-    const calcBuf = Buffer.from(calculatedSig, "hex");
-    const recvBuf = Buffer.from(receivedSig,   "hex");
-    if (calcBuf.length !== recvBuf.length) return false;
-    return crypto.timingSafeEqual(calcBuf, recvBuf);
-  } catch (err) {
-    console.error("[Kashier] Error verifying webhook signature:", err);
+    const match1 = h1 === signature;
+    const match2 = h2 === signature;
+    const match3 = h3 === signature;
+
+    console.log("--- Kashier Format Tests ---");
+    console.log(`[Format 1 - Full Path ] Match? ${match1}  →  ${format1.substring(0, 80)}...`);
+    console.log(`[Format 2 - ?+Query   ] Match? ${match2}`);
+    console.log(`[Format 3 - Bare Query] Match? ${match3}`);
+    console.log("----------------------------");
+
+    return match1 || match2 || match3;
+  } catch (error) {
+    console.error("[Kashier] Error verifying webhook signature:", error);
     return false;
   }
-};
+}
