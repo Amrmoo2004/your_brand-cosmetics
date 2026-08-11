@@ -1636,8 +1636,7 @@
           }
         }
       }
-    }
-  },
+    },
     "/api/payments/checkout": {
       "post": {
         "summary": "Create a Kashier checkout session",
