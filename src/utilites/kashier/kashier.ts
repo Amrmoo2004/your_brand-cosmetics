@@ -18,28 +18,18 @@ export const generateKashierHash = (
   const hashString = `${data.merchantId}.${data.orderId}.${data.amount}.${data.currency}`;
 
   return crypto
-    .createHmac("sha256", apiKey)
+    .createHmac("sha256", apiKey.trim()) // <-- ضفنا trim هنا احتياطي
     .update(hashString)
     .digest("hex");
 };
 
 /**
  * Verify Kashier webhook signature.
- *
- * Tries 3 possible string formats that Kashier may use to sign the payload:
- *   Format 1: /api/webhooks/kashier?key=val&key=val   (full path + query)
- *   Format 2: ?key=val&key=val                         (query only with ?)
- *   Format 3:  key=val&key=val                         (bare query string)
- *
- * Logs which format matched so we can hard-code it permanently afterwards.
- *
- * @param payload   - Fully parsed webhook JSON body (req.body)
- * @param signature - Signature sent by Kashier (header / body field)
- * @returns true if any format matches
  */
 export function verifyKashierWebhook(payload: any, signature: string): boolean {
   try {
-    const secretKey = process.env.KASHIER_SECRET_KEY || "";
+    // ⬇️ التعديل السحري هنا ⬇️
+    const secretKey = (process.env.KASHIER_SECRET_KEY || "").trim();
     if (!secretKey || !signature) return false;
 
     // ── Secret Key Diagnostics ──────────────────────────────────────────────
@@ -59,7 +49,8 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
       return false;
     }
 
-    const apiKey = process.env.KASHIER_API_KEY || "";
+    // ⬇️ والتعديل هنا كمان ⬇️
+    const apiKey = (process.env.KASHIER_API_KEY || "").trim();
     const secretKeyPart1 = secretKey.includes("$") ? secretKey.split("$")[0] : secretKey;
     const secretKeyPart2 = secretKey.includes("$") ? secretKey.split("$")[1] : secretKey;
 
@@ -128,4 +119,3 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
     return false;
   }
 }
-
