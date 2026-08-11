@@ -50,10 +50,11 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
     ];
 
     // تجميع كل الاحتمالات الممكنة للمفاتيح اللي في ملف env
-    const keysToTest = [key1, key2];
+    const keysToTest: string[] = [key1, key2];
     if (key1.includes("$")) {
-      keysToTest.push(key1.split("$")[0]);
-      keysToTest.push(key1.split("$")[1]);
+      const parts = key1.split("$");
+      if (parts[0]) keysToTest.push(parts[0]);
+      if (parts[1]) keysToTest.push(parts[1]);
     }
 
     console.log("--- 🚀 KASHIER ULTIMATE MATRIX VERIFICATION ---");
