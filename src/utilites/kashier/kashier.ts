@@ -42,6 +42,17 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
     const secretKey = process.env.KASHIER_SECRET_KEY || "";
     if (!secretKey || !signature) return false;
 
+    // ── Secret Key Diagnostics ──────────────────────────────────────────────
+    const firstChars = secretKey.substring(0, 10);
+    const lastChars  = secretKey.substring(secretKey.length - 10);
+    console.log(`[Kashier Debug] Secret key length: ${secretKey.length}`);
+    console.log(`[Kashier Debug] First 10 chars: "${firstChars}"`);
+    console.log(`[Kashier Debug] Last  10 chars: "${lastChars}"`);
+    console.log(`[Kashier Debug] Contains $ sign: ${secretKey.includes("$")}`);
+    console.log(`[Kashier Debug] Starts with ': ${secretKey.startsWith("'")}`);
+    console.log(`[Kashier Debug] Received signature: ${signature}`);
+    // ────────────────────────────────────────────────────────────────────────
+
     const data = payload?.data;
     if (!data || !Array.isArray(data.signatureKeys)) {
       console.error("[Kashier] Missing data.signatureKeys in payload");
