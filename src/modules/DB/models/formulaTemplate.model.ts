@@ -29,15 +29,28 @@ export interface ITemplatePhaseCategory {
   maxItems?: number;
   minPercentage?: number;
   maxPercentage?: number;
-  minPercentagePerItem: number;
-  maxPercentagePerItem: number;
+  minPercentagePerItem?: number;
+  maxPercentagePerItem?: number;
+}
+
+export interface ITemplateIngredient {
+  _id?: mongoose.Types.ObjectId;
+  ingredientId: mongoose.Types.ObjectId;
+  minPercentage?: number;
+  maxPercentage?: number;
+  isRequired?: boolean;
 }
 
 export interface ITemplatePhase {
   _id?: mongoose.Types.ObjectId;
   phaseId?: mongoose.Types.ObjectId;
   phaseName: string;
+  minPercentage?: number;
+  maxPercentage?: number;
+  minItems?: number;
+  maxItems?: number;
   allowedCategories?: ITemplatePhaseCategory[];
+  ingredients?: ITemplateIngredient[];
 }
 
 export interface IFormulaTemplate extends Document {
@@ -133,6 +146,31 @@ const templatePhaseCategorySchema = new Schema<ITemplatePhaseCategory>(
   { _id: false }
 );
 
+const templateIngredientSchema = new Schema<ITemplateIngredient>(
+  {
+    ingredientId: {
+      type: Schema.Types.ObjectId,
+      ref: "Ingredient",
+      required: true,
+    },
+    minPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    maxPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    isRequired: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: true }
+);
+
 const templatePhaseSchema = new Schema<ITemplatePhase>(
   {
     phaseId: {
@@ -145,8 +183,30 @@ const templatePhaseSchema = new Schema<ITemplatePhase>(
       required: true,
       trim: true,
     },
+    minPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    maxPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    minItems: {
+      type: Number,
+      min: 0,
+    },
+    maxItems: {
+      type: Number,
+      min: 1,
+    },
     allowedCategories: {
       type: [templatePhaseCategorySchema],
+      default: [],
+    },
+    ingredients: {
+      type: [templateIngredientSchema],
       default: [],
     },
   },

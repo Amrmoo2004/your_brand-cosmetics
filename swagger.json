@@ -374,6 +374,22 @@
                   "type": "string",
                   "example": "Water Phase"
                 },
+                "minPercentage": {
+                  "type": "number",
+                  "example": 0
+                },
+                "maxPercentage": {
+                  "type": "number",
+                  "example": 78.5
+                },
+                "minItems": {
+                  "type": "number",
+                  "example": 2
+                },
+                "maxItems": {
+                  "type": "number",
+                  "example": 3
+                },
                 "allowedCategories": {
                   "type": "array",
                   "items": {
@@ -406,6 +422,30 @@
                       "maxPercentagePerItem": {
                         "type": "number",
                         "example": 5
+                      }
+                    }
+                  }
+                },
+                "ingredients": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ingredientId": {
+                        "type": "string",
+                        "example": "64a2f9b8c3f4e2a1b2c3d4e8"
+                      },
+                      "minPercentage": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "maxPercentage": {
+                        "type": "number",
+                        "example": 70
+                      },
+                      "isRequired": {
+                        "type": "boolean",
+                        "example": true
                       }
                     }
                   }

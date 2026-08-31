@@ -192,8 +192,86 @@ export const validateFormula = async (
     const template = await formulaTemplateModel.findById(templateId).lean();
     if (template) {
       for (const phase of input.phases) {
-        const templatePhase = template.phases.find(p => p.phaseName === phase.phaseName);
+        const templatePhase = template.phases.find((p) => p.phaseName === phase.phaseName);
         if (!templatePhase) continue;
+
+        // Phase Level Min/Max Percentage Check
+        const phaseTotalPercentage = phase.ingredients.reduce((sum, i) => sum + (i.targetPercentage || 0), 0);
+        if (templatePhase.minPercentage !== undefined && phaseTotalPercentage < templatePhase.minPercentage) {
+          checks.push({
+            id: `CHK-${checkCounter++}`,
+            name: `${phase.phaseName} total below minimum`,
+            status: "error",
+            message: `Total percentage for ${phase.phaseName} is ${phaseTotalPercentage}%, but minimum required is ${templatePhase.minPercentage}%.`,
+          });
+        }
+        if (templatePhase.maxPercentage !== undefined && phaseTotalPercentage > templatePhase.maxPercentage) {
+          checks.push({
+            id: `CHK-${checkCounter++}`,
+            name: `${phase.phaseName} total exceeds maximum`,
+            status: "error",
+            message: `Total percentage for ${phase.phaseName} is ${phaseTotalPercentage}%, but maximum allowed is ${templatePhase.maxPercentage}%.`,
+          });
+        }
+
+        // Phase Level Min/Max Items Count Check
+        const phaseItemsCount = phase.ingredients.length;
+        if (templatePhase.minItems !== undefined && phaseItemsCount < templatePhase.minItems) {
+          checks.push({
+            id: `CHK-${checkCounter++}`,
+            name: `${phase.phaseName} items count below minimum`,
+            status: "error",
+            message: `Please select at least ${templatePhase.minItems} ingredients for ${phase.phaseName}.`,
+          });
+        }
+        if (templatePhase.maxItems !== undefined && phaseItemsCount > templatePhase.maxItems) {
+          checks.push({
+            id: `CHK-${checkCounter++}`,
+            name: `${phase.phaseName} items count exceeds maximum`,
+            status: "error",
+            message: `You can select a maximum of ${templatePhase.maxItems} ingredients for ${phase.phaseName}.`,
+          });
+        }
+
+        // Template Custom Ingredients Check (if specified by Admin)
+        if (templatePhase.ingredients && templatePhase.ingredients.length > 0) {
+          const userIngMap = new Map(phase.ingredients.map(i => [i.ingredientId.toString(), i]));
+
+          for (const tplIng of templatePhase.ingredients) {
+            const ingIdStr = tplIng.ingredientId.toString();
+            const userIng = userIngMap.get(ingIdStr);
+            const doc = ingredientMap.get(ingIdStr);
+            const ingName = doc?.commercialName || "Ingredient";
+
+            if (tplIng.isRequired && !userIng) {
+              checks.push({
+                id: `CHK-${checkCounter++}`,
+                name: `Missing required ingredient`,
+                status: "error",
+                message: `Required ingredient ${ingName} is missing in ${phase.phaseName}.`,
+              });
+            }
+
+            if (userIng) {
+              if (tplIng.minPercentage !== undefined && userIng.targetPercentage < tplIng.minPercentage) {
+                checks.push({
+                  id: `CHK-${checkCounter++}`,
+                  name: `${ingName} below template limit`,
+                  status: "error",
+                  message: `${ingName} is at ${userIng.targetPercentage}% but template requires at least ${tplIng.minPercentage}%.`,
+                });
+              }
+              if (tplIng.maxPercentage !== undefined && userIng.targetPercentage > tplIng.maxPercentage) {
+                checks.push({
+                  id: `CHK-${checkCounter++}`,
+                  name: `${ingName} exceeds template limit`,
+                  status: "error",
+                  message: `${ingName} is at ${userIng.targetPercentage}% but template allows maximum ${tplIng.maxPercentage}%.`,
+                });
+              }
+            }
+          }
+        }
 
         if (templatePhase.allowedCategories && templatePhase.allowedCategories.length > 0) {
            // Group user's ingredients by their categoryId

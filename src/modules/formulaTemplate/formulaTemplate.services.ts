@@ -40,6 +40,7 @@ class FormulaTemplateService {
       .populate("packageId", "name")
       .populate("phases.phaseId", "name code description assignedCategories")
       .populate("phases.allowedCategories.categoryId", "name code iconEnum description")
+      .populate("phases.ingredients.ingredientId", "commercialName inciName supplier internalCode categoryId usageGuidelines")
       .lean();
 
     res.status(200).json({
@@ -59,6 +60,7 @@ class FormulaTemplateService {
       .populate("packageId", "name")
       .populate("phases.phaseId", "name code description assignedCategories")
       .populate("phases.allowedCategories.categoryId", "name code iconEnum description")
+      .populate("phases.ingredients.ingredientId", "commercialName inciName supplier internalCode categoryId usageGuidelines")
       .lean();
 
     if (!template) {

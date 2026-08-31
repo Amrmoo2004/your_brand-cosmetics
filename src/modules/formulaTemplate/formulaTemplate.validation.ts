@@ -11,14 +11,26 @@ const templatePhaseCategorySchema = z.object({
   maxItems: z.number().min(1).optional(),
   minPercentage: z.number().min(0).max(100).optional(),
   maxPercentage: z.number().min(0).max(100).optional(),
-  minPercentagePerItem: z.number().min(0).max(100),
-  maxPercentagePerItem: z.number().min(0).max(100),
+  minPercentagePerItem: z.number().min(0).max(100).optional(),
+  maxPercentagePerItem: z.number().min(0).max(100).optional(),
+});
+
+const templateIngredientSchema = z.object({
+  ingredientId: z.string().length(24, "Invalid ingredient ID"),
+  minPercentage: z.number().min(0).max(100).optional(),
+  maxPercentage: z.number().min(0).max(100).optional(),
+  isRequired: z.boolean().optional().default(false),
 });
 
 const templatePhaseSchema = z.object({
   phaseId: z.string().length(24, "Invalid phase ID").optional(),
   phaseName: z.string().min(1, "Phase name is required"),
+  minPercentage: z.number().min(0).max(100).optional(),
+  maxPercentage: z.number().min(0).max(100).optional(),
+  minItems: z.number().min(0).optional(),
+  maxItems: z.number().min(1).optional(),
   allowedCategories: z.array(templatePhaseCategorySchema).optional().default([]),
+  ingredients: z.array(templateIngredientSchema).optional().default([]),
 });
 
 const compatibilityRuleZodSchema = z.object({
