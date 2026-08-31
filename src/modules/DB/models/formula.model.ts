@@ -40,7 +40,8 @@ export interface IFormulaIngredient {
 }
 
 export interface IFormulaPhase {
-  phaseId: mongoose.Types.ObjectId;
+  _id?: mongoose.Types.ObjectId;
+  phaseId?: mongoose.Types.ObjectId | undefined;
   phaseName: string;
   ingredients: IFormulaIngredient[];
 }
@@ -93,18 +94,19 @@ const formulaPhaseSchema = new Schema<IFormulaPhase>(
     phaseId: {
       type: Schema.Types.ObjectId,
       ref: "Phase",
-      required: true,
+      required: false,
     },
     phaseName: {
       type: String,
       required: true,
+      trim: true,
     },
     ingredients: {
       type: [formulaIngredientSchema],
       default: [],
     },
   },
-  { _id: false }
+  { _id: true }
 );
 
 const formulaSchema = new Schema<IFormula>(

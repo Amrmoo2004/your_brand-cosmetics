@@ -114,21 +114,23 @@ class FormulaService {
 
     // Clone the template phases into an empty formula structure
     const clonedPhases = template.phases.map((p) => ({
-      phaseId: p.phaseId,
+      ...(p.phaseId ? { phaseId: p.phaseId } : {}),
       phaseName: p.phaseName,
       ingredients: [], // User will fill these in via update
     }));
 
-    const formula = await formulaModel.create({
-      formulaName: `${template.templateName} (My Copy)`,
-      category: template.category,
-      formulaType: template.formulaType,
-      templateId: template._id,
-      phases: clonedPhases,
-      createdBy: userId,
-      status: "Draft",
-      targetBatchSize: 1, // Default
-    });
+    const formula = await formulaModel.create(
+      stripUndefined({
+        formulaName: `${template.templateName} (My Copy)`,
+        category: template.category,
+        formulaType: template.formulaType,
+        templateId: template._id,
+        phases: clonedPhases,
+        createdBy: userId,
+        status: "Draft",
+        targetBatchSize: 1, // Default
+      }) as any
+    );
 
     res.status(201).json({
       message: "Formula cloned from template successfully",
@@ -264,7 +266,7 @@ class FormulaService {
       });
 
       phases = existing.phases.map((phase, i) => ({
-        phaseId: phase.phaseId.toString(),
+        ...(phase.phaseId ? { phaseId: phase.phaseId.toString() } : {}),
         phaseName: phase.phaseName,
         ingredients: phase.ingredients.map((ing, j) => ({
           ingredientId: ing.ingredientId.toString(),

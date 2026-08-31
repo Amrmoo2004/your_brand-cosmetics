@@ -16,8 +16,8 @@ const templatePhaseCategorySchema = z.object({
 });
 
 const templatePhaseSchema = z.object({
-  phaseId: z.string().length(24, "Invalid phase ID"),
-  phaseName: z.string().min(1),
+  phaseId: z.string().length(24, "Invalid phase ID").optional(),
+  phaseName: z.string().min(1, "Phase name is required"),
   allowedCategories: z.array(templatePhaseCategorySchema).optional().default([]),
 });
 

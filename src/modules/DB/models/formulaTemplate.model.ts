@@ -34,7 +34,8 @@ export interface ITemplatePhaseCategory {
 }
 
 export interface ITemplatePhase {
-  phaseId: mongoose.Types.ObjectId;
+  _id?: mongoose.Types.ObjectId;
+  phaseId?: mongoose.Types.ObjectId;
   phaseName: string;
   allowedCategories?: ITemplatePhaseCategory[];
 }
@@ -137,18 +138,19 @@ const templatePhaseSchema = new Schema<ITemplatePhase>(
     phaseId: {
       type: Schema.Types.ObjectId,
       ref: "Phase",
-      required: true,
+      required: false,
     },
     phaseName: {
       type: String,
       required: true,
+      trim: true,
     },
     allowedCategories: {
       type: [templatePhaseCategorySchema],
       default: [],
     },
   },
-  { _id: false }
+  { _id: true }
 );
 
 const formulaTemplateSchema = new Schema<IFormulaTemplate>(
