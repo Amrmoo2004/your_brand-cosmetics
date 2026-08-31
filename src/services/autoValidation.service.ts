@@ -333,7 +333,7 @@ export const validateFormula = async (
                const doc = ingredientMap.get(ing.ingredientId?.toString());
                if (!doc) continue;
 
-               if (ing.targetPercentage < allowedCat.minPercentagePerItem) {
+               if (allowedCat.minPercentagePerItem !== undefined && ing.targetPercentage < allowedCat.minPercentagePerItem) {
                  checks.push({
                    id: `CHK-${checkCounter++}`,
                    name: `${doc.commercialName} below template minimum`,
@@ -341,7 +341,7 @@ export const validateFormula = async (
                    message: `${doc.commercialName} is at ${ing.targetPercentage}% but template requires at least ${allowedCat.minPercentagePerItem}%.`,
                  });
                }
-               if (ing.targetPercentage > allowedCat.maxPercentagePerItem) {
+               if (allowedCat.maxPercentagePerItem !== undefined && ing.targetPercentage > allowedCat.maxPercentagePerItem) {
                  checks.push({
                    id: `CHK-${checkCounter++}`,
                    name: `${doc.commercialName} exceeds template maximum`,
