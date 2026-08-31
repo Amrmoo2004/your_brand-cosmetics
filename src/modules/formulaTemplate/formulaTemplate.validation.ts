@@ -7,6 +7,10 @@ import {
 
 const templatePhaseCategorySchema = z.object({
   categoryId: z.string().length(24, "Invalid category ID"),
+  minItems: z.number().min(0).optional(),
+  maxItems: z.number().min(1).optional(),
+  minPercentage: z.number().min(0).max(100).optional(),
+  maxPercentage: z.number().min(0).max(100).optional(),
   minPercentagePerItem: z.number().min(0).max(100),
   maxPercentagePerItem: z.number().min(0).max(100),
 });
@@ -14,10 +18,6 @@ const templatePhaseCategorySchema = z.object({
 const templatePhaseSchema = z.object({
   phaseId: z.string().length(24, "Invalid phase ID"),
   phaseName: z.string().min(1),
-  minPercentage: z.number().min(0).max(100).optional(),
-  maxPercentage: z.number().min(0).max(100).optional(),
-  minItems: z.number().min(0).optional(),
-  maxItems: z.number().min(1).optional(),
   allowedCategories: z.array(templatePhaseCategorySchema).optional().default([]),
 });
 

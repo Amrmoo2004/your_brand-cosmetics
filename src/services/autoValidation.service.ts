@@ -187,7 +187,7 @@ export const validateFormula = async (
     }
   }
 
-  // ── 6. Advanced Template Constraints (Phase items, Category Percentages) ─
+  // ── 6. Advanced Template Constraints (Category items, Category Percentages) ─
   if (templateId) {
     const template = await formulaTemplateModel.findById(templateId).lean();
     if (template) {
@@ -195,38 +195,66 @@ export const validateFormula = async (
         const templatePhase = template.phases.find(p => p.phaseName === phase.phaseName);
         if (!templatePhase) continue;
 
-        const phaseItemsCount = phase.ingredients.length;
-        if (templatePhase.minItems !== undefined && phaseItemsCount < templatePhase.minItems) {
-           checks.push({
-             id: `CHK-${checkCounter++}`,
-             name: `${phase.phaseName} items count`,
-             status: "error",
-             message: `Please select at least ${templatePhase.minItems} ingredients for ${phase.phaseName}.`,
-           });
-        }
-        if (templatePhase.maxItems !== undefined && phaseItemsCount > templatePhase.maxItems) {
-           checks.push({
-             id: `CHK-${checkCounter++}`,
-             name: `${phase.phaseName} items count`,
-             status: "error",
-             message: `You can select a maximum of ${templatePhase.maxItems} ingredients for ${phase.phaseName}.`,
-           });
-        }
-
         if (templatePhase.allowedCategories && templatePhase.allowedCategories.length > 0) {
+           // Group user's ingredients by their categoryId
+           const ingredientsByCategory = new Map<string, typeof phase.ingredients>();
            for (const ing of phase.ingredients) {
              const doc = ingredientMap.get(ing.ingredientId?.toString());
              if (!doc) continue;
+             const catId = doc.categoryId.toString();
+             if (!ingredientsByCategory.has(catId)) {
+               ingredientsByCategory.set(catId, []);
+             }
+             ingredientsByCategory.get(catId)!.push(ing);
+           }
 
-             const allowedCat = templatePhase.allowedCategories.find(c => c.categoryId.toString() === doc.categoryId.toString());
-             if (!allowedCat) {
+           for (const allowedCat of templatePhase.allowedCategories) {
+             const catId = allowedCat.categoryId.toString();
+             const catIngredients = ingredientsByCategory.get(catId) || [];
+             const catCount = catIngredients.length;
+
+             // Check min/max items per category
+             if (allowedCat.minItems !== undefined && catCount < allowedCat.minItems) {
                checks.push({
                  id: `CHK-${checkCounter++}`,
-                 name: "Unauthorized Category",
+                 name: `${phase.phaseName} category items count`,
                  status: "error",
-                 message: `Ingredient ${doc.commercialName} is not allowed in ${phase.phaseName}.`,
+                 message: `Please select at least ${allowedCat.minItems} ingredient(s) from category in ${phase.phaseName}.`,
                });
-             } else {
+             }
+             if (allowedCat.maxItems !== undefined && catCount > allowedCat.maxItems) {
+               checks.push({
+                 id: `CHK-${checkCounter++}`,
+                 name: `${phase.phaseName} category items count`,
+                 status: "error",
+                 message: `You can select a maximum of ${allowedCat.maxItems} ingredient(s) from category in ${phase.phaseName}.`,
+               });
+             }
+
+             // Check category total percentage
+             const totalCategoryPercentage = catIngredients.reduce((sum, i) => sum + (i.targetPercentage || 0), 0);
+             if (allowedCat.minPercentage !== undefined && totalCategoryPercentage < allowedCat.minPercentage) {
+               checks.push({
+                 id: `CHK-${checkCounter++}`,
+                 name: `Category total percentage below minimum`,
+                 status: "error",
+                 message: `Total percentage for category in ${phase.phaseName} is ${totalCategoryPercentage}%, but minimum required is ${allowedCat.minPercentage}%.`,
+               });
+             }
+             if (allowedCat.maxPercentage !== undefined && totalCategoryPercentage > allowedCat.maxPercentage) {
+               checks.push({
+                 id: `CHK-${checkCounter++}`,
+                 name: `Category total percentage exceeds maximum`,
+                 status: "error",
+                 message: `Total percentage for category in ${phase.phaseName} is ${totalCategoryPercentage}%, but maximum allowed is ${allowedCat.maxPercentage}%.`,
+               });
+             }
+
+             // Check percentage per item
+             for (const ing of catIngredients) {
+               const doc = ingredientMap.get(ing.ingredientId?.toString());
+               if (!doc) continue;
+
                if (ing.targetPercentage < allowedCat.minPercentagePerItem) {
                  checks.push({
                    id: `CHK-${checkCounter++}`,
@@ -243,6 +271,21 @@ export const validateFormula = async (
                    message: `${doc.commercialName} is at ${ing.targetPercentage}% but template allows maximum ${allowedCat.maxPercentagePerItem}%.`,
                  });
                }
+             }
+           }
+
+           // Check for unauthorized categories
+           for (const ing of phase.ingredients) {
+             const doc = ingredientMap.get(ing.ingredientId?.toString());
+             if (!doc) continue;
+             const allowedCat = templatePhase.allowedCategories.find(c => c.categoryId.toString() === doc.categoryId.toString());
+             if (!allowedCat) {
+               checks.push({
+                 id: `CHK-${checkCounter++}`,
+                 name: "Unauthorized Category",
+                 status: "error",
+                 message: `Ingredient ${doc.commercialName} is not allowed in ${phase.phaseName}.`,
+               });
              }
            }
         }

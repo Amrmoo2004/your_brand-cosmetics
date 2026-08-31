@@ -115,6 +115,7 @@ class FormulaService {
     // Clone the template phases into an empty formula structure
     const clonedPhases = template.phases.map((p) => ({
       phaseId: p.phaseId,
+      phaseName: p.phaseName,
       ingredients: [], // User will fill these in via update
     }));
 
@@ -142,7 +143,7 @@ class FormulaService {
 
     const formulas = await formulaModel
       .find(filter)
-      .select("formulaName category status formulaType createdAt updatedAt")
+      .select("formulaName category status formulaType targetBatchSize measurementUnit createdAt updatedAt")
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -157,7 +158,13 @@ class FormulaService {
     const { id } = validation.formulaIdParamSchema.parse(req.params);
     const filter = this.getOwnershipFilter(id, req);
 
-    const formula = await formulaModel.findOne(filter).lean();
+    const formula = await formulaModel
+      .findOne(filter)
+      .populate("templateId", "templateName description methodSteps")
+      .populate("phases.phaseId", "name code description")
+      .populate("phases.ingredients.ingredientId", "commercialName inciName internalCode categoryId usageGuidelines")
+      .lean();
+
     if (!formula) {
       throw new BadRequestException("Formula not found or you do not have permission");
     }

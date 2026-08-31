@@ -25,6 +25,10 @@ export interface ICompatibilityRule {
 
 export interface ITemplatePhaseCategory {
   categoryId: mongoose.Types.ObjectId;
+  minItems?: number;
+  maxItems?: number;
+  minPercentage?: number;
+  maxPercentage?: number;
   minPercentagePerItem: number;
   maxPercentagePerItem: number;
 }
@@ -32,10 +36,6 @@ export interface ITemplatePhaseCategory {
 export interface ITemplatePhase {
   phaseId: mongoose.Types.ObjectId;
   phaseName: string;
-  minPercentage?: number;
-  maxPercentage?: number;
-  minItems?: number;
-  maxItems?: number;
   allowedCategories?: ITemplatePhaseCategory[];
 }
 
@@ -98,6 +98,24 @@ const templatePhaseCategorySchema = new Schema<ITemplatePhaseCategory>(
       ref: "IngredientCategory",
       required: true,
     },
+    minItems: {
+      type: Number,
+      min: 0,
+    },
+    maxItems: {
+      type: Number,
+      min: 1,
+    },
+    minPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    maxPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
     minPercentagePerItem: {
       type: Number,
       required: true,
@@ -124,24 +142,6 @@ const templatePhaseSchema = new Schema<ITemplatePhase>(
     phaseName: {
       type: String,
       required: true,
-    },
-    minPercentage: {
-      type: Number,
-      min: 0,
-      max: 100,
-    },
-    maxPercentage: {
-      type: Number,
-      min: 0,
-      max: 100,
-    },
-    minItems: {
-      type: Number,
-      min: 0,
-    },
-    maxItems: {
-      type: Number,
-      min: 1,
     },
     allowedCategories: {
       type: [templatePhaseCategorySchema],

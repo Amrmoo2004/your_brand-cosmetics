@@ -38,7 +38,8 @@ class FormulaTemplateService {
     const templates = await formulaTemplateModel
       .find(filter)
       .populate("packageId", "name")
-      .populate("phases.phaseId", "name assignedCategories")
+      .populate("phases.phaseId", "name code description assignedCategories")
+      .populate("phases.allowedCategories.categoryId", "name code iconEnum description")
       .lean();
 
     res.status(200).json({
@@ -56,7 +57,8 @@ class FormulaTemplateService {
     const template = await formulaTemplateModel
       .findById(id)
       .populate("packageId", "name")
-      .populate("phases.phaseId", "name assignedCategories")
+      .populate("phases.phaseId", "name code description assignedCategories")
+      .populate("phases.allowedCategories.categoryId", "name code iconEnum description")
       .lean();
 
     if (!template) {

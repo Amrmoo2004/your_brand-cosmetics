@@ -374,22 +374,6 @@
                   "type": "string",
                   "example": "Water Phase"
                 },
-                "minPercentage": {
-                  "type": "number",
-                  "example": 0
-                },
-                "maxPercentage": {
-                  "type": "number",
-                  "example": 98
-                },
-                "minItems": {
-                  "type": "number",
-                  "example": 2
-                },
-                "maxItems": {
-                  "type": "number",
-                  "example": 3
-                },
                 "allowedCategories": {
                   "type": "array",
                   "items": {
@@ -398,6 +382,22 @@
                       "categoryId": {
                         "type": "string",
                         "example": "64a2f9b8c3f4e2a1b2c3d4e5"
+                      },
+                      "minItems": {
+                        "type": "number",
+                        "example": 2
+                      },
+                      "maxItems": {
+                        "type": "number",
+                        "example": 3
+                      },
+                      "minPercentage": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "maxPercentage": {
+                        "type": "number",
+                        "example": 78.5
                       },
                       "minPercentagePerItem": {
                         "type": "number",
