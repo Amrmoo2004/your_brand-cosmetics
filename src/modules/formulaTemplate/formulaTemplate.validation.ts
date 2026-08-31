@@ -5,11 +5,20 @@ import {
   RULE_SEVERITY_OPTIONS,
 } from "../DB/models/formulaTemplate.model.js";
 
+const templatePhaseCategorySchema = z.object({
+  categoryId: z.string().length(24, "Invalid category ID"),
+  minPercentagePerItem: z.number().min(0).max(100),
+  maxPercentagePerItem: z.number().min(0).max(100),
+});
+
 const templatePhaseSchema = z.object({
   phaseId: z.string().length(24, "Invalid phase ID"),
   phaseName: z.string().min(1),
   minPercentage: z.number().min(0).max(100).optional(),
   maxPercentage: z.number().min(0).max(100).optional(),
+  minItems: z.number().min(0).optional(),
+  maxItems: z.number().min(1).optional(),
+  allowedCategories: z.array(templatePhaseCategorySchema).optional().default([]),
 });
 
 const compatibilityRuleZodSchema = z.object({

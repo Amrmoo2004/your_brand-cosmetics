@@ -187,98 +187,154 @@ export const validateFormula = async (
     }
   }
 
-  // ── 6. Dynamic Compatibility Rules (Template Rule Engine) ──────────────
+  // ── 6. Advanced Template Constraints (Phase items, Category Percentages) ─
   if (templateId) {
     const template = await formulaTemplateModel.findById(templateId).lean();
-
-    if (template && template.compatibilityRules && template.compatibilityRules.length > 0) {
-      // Collect all category IDs used in this formula
-      const usedCategoryIds = new Set<string>();
-      // Map: categoryId → list of phase names where ingredients of that category appear
-      const categoryPhaseMap = new Map<string, Set<string>>();
-
+    if (template) {
       for (const phase of input.phases) {
-        for (const ing of phase.ingredients) {
-          const doc = ingredientMap.get(ing.ingredientId?.toString());
-          if (doc && doc.categoryId) {
-            const catId = doc.categoryId.toString();
-            usedCategoryIds.add(catId);
+        const templatePhase = template.phases.find(p => p.phaseName === phase.phaseName);
+        if (!templatePhase) continue;
 
-            if (!categoryPhaseMap.has(catId)) {
-              categoryPhaseMap.set(catId, new Set());
-            }
-            categoryPhaseMap.get(catId)!.add(phase.phaseName);
-          }
+        const phaseItemsCount = phase.ingredients.length;
+        if (templatePhase.minItems !== undefined && phaseItemsCount < templatePhase.minItems) {
+           checks.push({
+             id: `CHK-${checkCounter++}`,
+             name: `${phase.phaseName} items count`,
+             status: "error",
+             message: `Please select at least ${templatePhase.minItems} ingredients for ${phase.phaseName}.`,
+           });
+        }
+        if (templatePhase.maxItems !== undefined && phaseItemsCount > templatePhase.maxItems) {
+           checks.push({
+             id: `CHK-${checkCounter++}`,
+             name: `${phase.phaseName} items count`,
+             status: "error",
+             message: `You can select a maximum of ${templatePhase.maxItems} ingredients for ${phase.phaseName}.`,
+           });
+        }
+
+        if (templatePhase.allowedCategories && templatePhase.allowedCategories.length > 0) {
+           for (const ing of phase.ingredients) {
+             const doc = ingredientMap.get(ing.ingredientId?.toString());
+             if (!doc) continue;
+
+             const allowedCat = templatePhase.allowedCategories.find(c => c.categoryId.toString() === doc.categoryId.toString());
+             if (!allowedCat) {
+               checks.push({
+                 id: `CHK-${checkCounter++}`,
+                 name: "Unauthorized Category",
+                 status: "error",
+                 message: `Ingredient ${doc.commercialName} is not allowed in ${phase.phaseName}.`,
+               });
+             } else {
+               if (ing.targetPercentage < allowedCat.minPercentagePerItem) {
+                 checks.push({
+                   id: `CHK-${checkCounter++}`,
+                   name: `${doc.commercialName} below template minimum`,
+                   status: "error",
+                   message: `${doc.commercialName} is at ${ing.targetPercentage}% but template requires at least ${allowedCat.minPercentagePerItem}%.`,
+                 });
+               }
+               if (ing.targetPercentage > allowedCat.maxPercentagePerItem) {
+                 checks.push({
+                   id: `CHK-${checkCounter++}`,
+                   name: `${doc.commercialName} exceeds template maximum`,
+                   status: "error",
+                   message: `${doc.commercialName} is at ${ing.targetPercentage}% but template allows maximum ${allowedCat.maxPercentagePerItem}%.`,
+                 });
+               }
+             }
+           }
         }
       }
 
-      let allRulesPassed = true;
+      // ── 7. Legacy Dynamic Compatibility Rules (Template Rule Engine) ──────────────
+      if (template.compatibilityRules && template.compatibilityRules.length > 0) {
+        const usedCategoryIds = new Set<string>();
+        const categoryPhaseMap = new Map<string, Set<string>>();
 
-      for (const rule of template.compatibilityRules) {
-        const conditionCatId = rule.conditionCategory.toString();
-        const hasCondition = usedCategoryIds.has(conditionCatId);
+        for (const phase of input.phases) {
+          for (const ing of phase.ingredients) {
+            const doc = ingredientMap.get(ing.ingredientId?.toString());
+            if (doc && doc.categoryId) {
+              const catId = doc.categoryId.toString();
+              usedCategoryIds.add(catId);
 
-        if (!hasCondition) continue; // Rule doesn't apply if condition category isn't used
-
-        switch (rule.ruleType) {
-          case "REQUIRE_CATEGORY": {
-            if (!rule.requiredCategory) break;
-            const hasRequired = usedCategoryIds.has(rule.requiredCategory.toString());
-            if (!hasRequired) {
-              allRulesPassed = false;
-              checks.push({
-                id: `CHK-${checkCounter++}`,
-                name: "Template Rule Violation",
-                status: rule.severity,
-                message: rule.errorMessage,
-              });
+              if (!categoryPhaseMap.has(catId)) {
+                categoryPhaseMap.set(catId, new Set());
+              }
+              categoryPhaseMap.get(catId)!.add(phase.phaseName);
             }
-            break;
-          }
-
-          case "RESTRICT_COMBINATION": {
-            if (!rule.restrictedCategory) break;
-            const hasRestricted = usedCategoryIds.has(rule.restrictedCategory.toString());
-            if (hasRestricted) {
-              allRulesPassed = false;
-              checks.push({
-                id: `CHK-${checkCounter++}`,
-                name: "Template Rule Violation",
-                status: rule.severity,
-                message: rule.errorMessage,
-              });
-            }
-            break;
-          }
-
-          case "REQUIRE_PHASE": {
-            if (!rule.requiredPhaseName) break;
-            const phasesWithCategory = categoryPhaseMap.get(conditionCatId);
-            const isInCorrectPhase = phasesWithCategory?.has(rule.requiredPhaseName);
-            // Check if ALL ingredients of this category are in the required phase
-            const isOnlyInCorrectPhase =
-              phasesWithCategory?.size === 1 && isInCorrectPhase;
-            if (!isOnlyInCorrectPhase) {
-              allRulesPassed = false;
-              checks.push({
-                id: `CHK-${checkCounter++}`,
-                name: "Template Rule Violation",
-                status: rule.severity,
-                message: rule.errorMessage,
-              });
-            }
-            break;
           }
         }
-      }
 
-      if (allRulesPassed) {
-        checks.push({
-          id: `CHK-${checkCounter++}`,
-          name: "Template compatibility rules",
-          status: "success",
-          message: "All template compatibility rules passed.",
-        });
+        let allRulesPassed = true;
+
+        for (const rule of template.compatibilityRules) {
+          const conditionCatId = rule.conditionCategory.toString();
+          const hasCondition = usedCategoryIds.has(conditionCatId);
+
+          if (!hasCondition) continue; 
+
+          switch (rule.ruleType) {
+            case "REQUIRE_CATEGORY": {
+              if (!rule.requiredCategory) break;
+              const hasRequired = usedCategoryIds.has(rule.requiredCategory.toString());
+              if (!hasRequired) {
+                allRulesPassed = false;
+                checks.push({
+                  id: `CHK-${checkCounter++}`,
+                  name: "Template Rule Violation",
+                  status: rule.severity,
+                  message: rule.errorMessage,
+                });
+              }
+              break;
+            }
+
+            case "RESTRICT_COMBINATION": {
+              if (!rule.restrictedCategory) break;
+              const hasRestricted = usedCategoryIds.has(rule.restrictedCategory.toString());
+              if (hasRestricted) {
+                allRulesPassed = false;
+                checks.push({
+                  id: `CHK-${checkCounter++}`,
+                  name: "Template Rule Violation",
+                  status: rule.severity,
+                  message: rule.errorMessage,
+                });
+              }
+              break;
+            }
+
+            case "REQUIRE_PHASE": {
+              if (!rule.requiredPhaseName) break;
+              const phasesWithCategory = categoryPhaseMap.get(conditionCatId);
+              const isInCorrectPhase = phasesWithCategory?.has(rule.requiredPhaseName);
+              const isOnlyInCorrectPhase =
+                phasesWithCategory?.size === 1 && isInCorrectPhase;
+              if (!isOnlyInCorrectPhase) {
+                allRulesPassed = false;
+                checks.push({
+                  id: `CHK-${checkCounter++}`,
+                  name: "Template Rule Violation",
+                  status: rule.severity,
+                  message: rule.errorMessage,
+                });
+              }
+              break;
+            }
+          }
+        }
+
+        if (allRulesPassed) {
+          checks.push({
+            id: `CHK-${checkCounter++}`,
+            name: "Template compatibility rules",
+            status: "success",
+            message: "All template compatibility rules passed.",
+          });
+        }
       }
     }
   }
