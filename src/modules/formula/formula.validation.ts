@@ -33,6 +33,7 @@ export const createFormulaSchema = z.object({
   labLocation: z.string().max(200).optional(),
   targetpHMin: z.number().min(0).max(14).optional(),
   targetpHMax: z.number().min(0).max(14).optional(),
+  templateId: z.string().length(24, "Invalid template ID").optional(),
   phases: z.array(formulaPhaseSchema).optional().default([]),
 });
 

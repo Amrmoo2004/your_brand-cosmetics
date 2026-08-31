@@ -52,19 +52,19 @@ export function verifyKashierWebhook(payload: any, signature: string): boolean {
     // تجميع كل الاحتمالات الممكنة للمفاتيح اللي في ملف env
     const keysToTest: string[] = [key1, key2];
     if (key1.includes("$")) {
-      const parts = key1.split("$");
+      const parts = key1.split("$");0
       if (parts[0]) keysToTest.push(parts[0]);
       if (parts[1]) keysToTest.push(parts[1]);
     }
 
     console.log("--- 🚀 KASHIER ULTIMATE MATRIX VERIFICATION ---");
-    
+
     for (const key of keysToTest) {
       if (!key) continue;
-      
+
       for (const str of stringsToTest) {
         const hash = crypto.createHmac("sha256", key).update(str).digest("hex");
-        
+
         if (hash.toLowerCase() === signature.toLowerCase()) {
           console.log(`✅ MATCH FOUND!`);
           console.log(`🔑 Key Used length: ${key.length}`);

@@ -21,10 +21,7 @@ interface BatchResult {
   totalBatchWeight: number;
 }
 
-/**
- * Converts batch size to grams for consistent internal calculation,
- * then converts results back to the original unit.
- */
+
 const toGrams = (value: number, unit: string): number => {
   switch (unit) {
     case "kg":

@@ -1,6 +1,28 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { FORMULA_TYPE_OPTIONS, FormulaType } from "./formula.model.js";
 
+// ── Compatibility Rule Types ─────────────────────────────────────────────
+export const RULE_TYPE_OPTIONS = [
+  "REQUIRE_CATEGORY",
+  "RESTRICT_COMBINATION",
+  "REQUIRE_PHASE",
+] as const;
+
+export const RULE_SEVERITY_OPTIONS = ["error", "warning"] as const;
+
+export type RuleType = (typeof RULE_TYPE_OPTIONS)[number];
+export type RuleSeverity = (typeof RULE_SEVERITY_OPTIONS)[number];
+
+export interface ICompatibilityRule {
+  ruleType: RuleType;
+  conditionCategory: mongoose.Types.ObjectId;
+  requiredCategory?: mongoose.Types.ObjectId;
+  restrictedCategory?: mongoose.Types.ObjectId;
+  requiredPhaseName?: string;
+  errorMessage: string;
+  severity: RuleSeverity;
+}
+
 export interface ITemplatePhase {
   phaseId: mongoose.Types.ObjectId;
   phaseName: string;
@@ -15,10 +37,50 @@ export interface IFormulaTemplate extends Document {
   packageId: mongoose.Types.ObjectId;
   description?: string;
   phases: ITemplatePhase[];
+  compatibilityRules: ICompatibilityRule[];
   methodSteps: string[];
   activeStatus: boolean;
   createdBy: mongoose.Types.ObjectId;
 }
+
+// ── Sub-document Schemas ─────────────────────────────────────────────────
+const compatibilityRuleSchema = new Schema<ICompatibilityRule>(
+  {
+    ruleType: {
+      type: String,
+      enum: RULE_TYPE_OPTIONS,
+      required: true,
+    },
+    conditionCategory: {
+      type: Schema.Types.ObjectId,
+      ref: "IngredientCategory",
+      required: true,
+    },
+    requiredCategory: {
+      type: Schema.Types.ObjectId,
+      ref: "IngredientCategory",
+    },
+    restrictedCategory: {
+      type: Schema.Types.ObjectId,
+      ref: "IngredientCategory",
+    },
+    requiredPhaseName: {
+      type: String,
+      trim: true,
+    },
+    errorMessage: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    severity: {
+      type: String,
+      enum: RULE_SEVERITY_OPTIONS,
+      default: "error",
+    },
+  },
+  { _id: true }
+);
 
 const templatePhaseSchema = new Schema<ITemplatePhase>(
   {
@@ -73,6 +135,10 @@ const formulaTemplateSchema = new Schema<IFormulaTemplate>(
     },
     phases: {
       type: [templatePhaseSchema],
+      default: [],
+    },
+    compatibilityRules: {
+      type: [compatibilityRuleSchema],
       default: [],
     },
     methodSteps: {

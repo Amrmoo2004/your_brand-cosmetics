@@ -1,10 +1,11 @@
 import { ingredientModel, IIngredient } from "../modules/DB/models/ingredient.model.js";
+import { formulaTemplateModel } from "../modules/DB/models/formulaTemplate.model.js";
 import { IValidationCheck } from "../modules/DB/models/mbr.model.js";
 
 interface PhaseInput {
   phaseName: string;
   ingredients: {
-    ingredientId: string;
+    ingredientId: any;
     targetPercentage: number;
   }[];
 }
@@ -16,7 +17,8 @@ interface ValidationInput {
 }
 
 export const validateFormula = async (
-  input: ValidationInput
+  input: ValidationInput,
+  templateId?: string
 ): Promise<IValidationCheck[]> => {
   const checks: IValidationCheck[] = [];
   let checkCounter = 1;
@@ -24,7 +26,7 @@ export const validateFormula = async (
   // ── 1. Total Percentage = 100% ─────────────────────────────────────────
   const totalPercentage = input.phases.reduce(
     (sum, phase) =>
-      sum + phase.ingredients.reduce((s, ing) => s + ing.targetPercentage, 0),
+      sum + phase.ingredients.reduce((s, ing) => s + (ing.targetPercentage || 0), 0),
     0
   );
 
@@ -54,9 +56,9 @@ export const validateFormula = async (
   }
 
   // ── 2. Collect all ingredient IDs for a single DB query ────────────────
-  const allIngredientIds = input.phases.flatMap((p) =>
-    p.ingredients.map((i) => i.ingredientId)
-  );
+  const allIngredientIds = input.phases
+    .flatMap((p) => p.ingredients.map((i) => i.ingredientId?.toString()))
+    .filter(Boolean);
 
   const ingredientDocs = await ingredientModel.find({
     _id: { $in: allIngredientIds },
@@ -72,7 +74,7 @@ export const validateFormula = async (
 
   for (const phase of input.phases) {
     for (const ing of phase.ingredients) {
-      const doc = ingredientMap.get(ing.ingredientId);
+      const doc = ingredientMap.get(ing.ingredientId?.toString());
       if (!doc) continue;
 
       const { minPercentage, maxPercentage } = doc.usageGuidelines;
@@ -112,7 +114,7 @@ export const validateFormula = async (
 
     for (const phase of input.phases) {
       for (const ing of phase.ingredients) {
-        const doc = ingredientMap.get(ing.ingredientId);
+        const doc = ingredientMap.get(ing.ingredientId?.toString());
         if (!doc) continue;
 
         const { pHMin, pHMax } = doc.usageGuidelines;
@@ -147,7 +149,7 @@ export const validateFormula = async (
     const phaseNameLower = phase.phaseName.toLowerCase();
 
     for (const ing of phase.ingredients) {
-      const doc = ingredientMap.get(ing.ingredientId);
+      const doc = ingredientMap.get(ing.ingredientId?.toString());
       if (!doc) continue;
 
       const solubility = doc.usageGuidelines.solubility;
@@ -185,5 +187,102 @@ export const validateFormula = async (
     }
   }
 
+  // ── 6. Dynamic Compatibility Rules (Template Rule Engine) ──────────────
+  if (templateId) {
+    const template = await formulaTemplateModel.findById(templateId).lean();
+
+    if (template && template.compatibilityRules && template.compatibilityRules.length > 0) {
+      // Collect all category IDs used in this formula
+      const usedCategoryIds = new Set<string>();
+      // Map: categoryId → list of phase names where ingredients of that category appear
+      const categoryPhaseMap = new Map<string, Set<string>>();
+
+      for (const phase of input.phases) {
+        for (const ing of phase.ingredients) {
+          const doc = ingredientMap.get(ing.ingredientId?.toString());
+          if (doc && doc.categoryId) {
+            const catId = doc.categoryId.toString();
+            usedCategoryIds.add(catId);
+
+            if (!categoryPhaseMap.has(catId)) {
+              categoryPhaseMap.set(catId, new Set());
+            }
+            categoryPhaseMap.get(catId)!.add(phase.phaseName);
+          }
+        }
+      }
+
+      let allRulesPassed = true;
+
+      for (const rule of template.compatibilityRules) {
+        const conditionCatId = rule.conditionCategory.toString();
+        const hasCondition = usedCategoryIds.has(conditionCatId);
+
+        if (!hasCondition) continue; // Rule doesn't apply if condition category isn't used
+
+        switch (rule.ruleType) {
+          case "REQUIRE_CATEGORY": {
+            if (!rule.requiredCategory) break;
+            const hasRequired = usedCategoryIds.has(rule.requiredCategory.toString());
+            if (!hasRequired) {
+              allRulesPassed = false;
+              checks.push({
+                id: `CHK-${checkCounter++}`,
+                name: "Template Rule Violation",
+                status: rule.severity,
+                message: rule.errorMessage,
+              });
+            }
+            break;
+          }
+
+          case "RESTRICT_COMBINATION": {
+            if (!rule.restrictedCategory) break;
+            const hasRestricted = usedCategoryIds.has(rule.restrictedCategory.toString());
+            if (hasRestricted) {
+              allRulesPassed = false;
+              checks.push({
+                id: `CHK-${checkCounter++}`,
+                name: "Template Rule Violation",
+                status: rule.severity,
+                message: rule.errorMessage,
+              });
+            }
+            break;
+          }
+
+          case "REQUIRE_PHASE": {
+            if (!rule.requiredPhaseName) break;
+            const phasesWithCategory = categoryPhaseMap.get(conditionCatId);
+            const isInCorrectPhase = phasesWithCategory?.has(rule.requiredPhaseName);
+            // Check if ALL ingredients of this category are in the required phase
+            const isOnlyInCorrectPhase =
+              phasesWithCategory?.size === 1 && isInCorrectPhase;
+            if (!isOnlyInCorrectPhase) {
+              allRulesPassed = false;
+              checks.push({
+                id: `CHK-${checkCounter++}`,
+                name: "Template Rule Violation",
+                status: rule.severity,
+                message: rule.errorMessage,
+              });
+            }
+            break;
+          }
+        }
+      }
+
+      if (allRulesPassed) {
+        checks.push({
+          id: `CHK-${checkCounter++}`,
+          name: "Template compatibility rules",
+          status: "success",
+          message: "All template compatibility rules passed.",
+        });
+      }
+    }
+  }
+
   return checks;
 };
+

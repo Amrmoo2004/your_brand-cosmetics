@@ -118,17 +118,20 @@ class MbrService {
     }
 
     // Run auto-validation
-    const validationChecks = await validateFormula({
-      targetpHMin: data.targetpHMin,
-      targetpHMax: data.targetpHMax,
-      phases: phases.map((p) => ({
-        phaseName: p.phaseName,
-        ingredients: p.ingredients.map((i) => ({
-          ingredientId: i.ingredientId,
-          targetPercentage: i.targetPercentage,
+    const validationChecks = await validateFormula(
+      {
+        targetpHMin: data.targetpHMin,
+        targetpHMax: data.targetpHMax,
+        phases: phases.map((p) => ({
+          phaseName: p.phaseName,
+          ingredients: p.ingredients.map((i) => ({
+            ingredientId: i.ingredientId,
+            targetPercentage: i.targetPercentage,
+          })),
         })),
-      })),
-    });
+      },
+      formula.templateId?.toString()
+    );
 
     const totalBatchWeight = phases.reduce((sum, p) => sum + (p.subtotal || 0), 0);
 
@@ -232,17 +235,22 @@ class MbrService {
       }));
 
       // Re-run validation
-      const validationChecks = await validateFormula({
-        targetpHMin: data.targetpHMin ?? existing.targetpHMin ?? undefined,
-        targetpHMax: data.targetpHMax ?? existing.targetpHMax ?? undefined,
-        phases: updatedPhases.map((p) => ({
-          phaseName: p.phaseName,
-          ingredients: p.ingredients.map((i) => ({
-            ingredientId: i.ingredientId,
-            targetPercentage: i.targetPercentage,
+      // Fetch the formula to get its templateId for dynamic rules
+      const formula = await formulaModel.findById(existing.formulaId).select("templateId").lean();
+      const validationChecks = await validateFormula(
+        {
+          targetpHMin: data.targetpHMin ?? existing.targetpHMin ?? undefined,
+          targetpHMax: data.targetpHMax ?? existing.targetpHMax ?? undefined,
+          phases: updatedPhases.map((p) => ({
+            phaseName: p.phaseName,
+            ingredients: p.ingredients.map((i) => ({
+              ingredientId: i.ingredientId,
+              targetPercentage: i.targetPercentage,
+            })),
           })),
-        })),
-      });
+        },
+        formula?.templateId?.toString()
+      );
 
       const totalBatchWeight = updatedPhases.reduce(
         (sum, p) => sum + (p.subtotal || 0),

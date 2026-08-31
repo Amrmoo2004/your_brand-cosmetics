@@ -298,6 +298,10 @@
             "type": "number",
             "example": 6
           },
+          "templateId": {
+            "type": "string",
+            "example": "64a2f9b8c3f4e2a1b2c3d4e5"
+          },
           "phases": {
             "type": "array",
             "items": {
@@ -377,6 +381,51 @@
                 "maxPercentage": {
                   "type": "number",
                   "example": 98
+                }
+              }
+            }
+          },
+          "compatibilityRules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ruleType": {
+                  "type": "string",
+                  "enum": [
+                    "REQUIRE_CATEGORY",
+                    "RESTRICT_COMBINATION",
+                    "REQUIRE_PHASE"
+                  ],
+                  "example": "REQUIRE_CATEGORY"
+                },
+                "conditionCategory": {
+                  "type": "string",
+                  "example": "64a2f9b8c3f4e2a1b2c3d4e5"
+                },
+                "requiredCategory": {
+                  "type": "string",
+                  "example": "64a2f9b8c3f4e2a1b2c3d4e6"
+                },
+                "restrictedCategory": {
+                  "type": "string",
+                  "example": "64a2f9b8c3f4e2a1b2c3d4e7"
+                },
+                "requiredPhaseName": {
+                  "type": "string",
+                  "example": "Water Phase"
+                },
+                "errorMessage": {
+                  "type": "string",
+                  "example": "لا يمكن خلط الماء بالزيت بدون مستحلب"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": [
+                    "error",
+                    "warning"
+                  ],
+                  "example": "error"
                 }
               }
             }
